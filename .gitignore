@@ -1,0 +1,4 @@
+vagrant/.vagrant
+vagrant/outputs/
+vagrant_work_dir/*
+vagrant/.env
