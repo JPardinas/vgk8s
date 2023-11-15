@@ -63,7 +63,13 @@ module Node
 
       $logger.debug(self, "Adding the apt update shell provisioner...")
       Utils.define_shell_provision node, "apt update", script_content: "apt update -y", privileged: true
-      
+
+      $logger.debug(self, "Adding the python3 installation shell provisioner...")
+      Utils.define_shell_provision node, "python3 installation", path_to_script: CONSTANTS::SCRIPT_INSTALL_PYTHON3, privileged: false
+
+      $logger.debug(self, "Adding the ansible-core installation shell provisioner...")
+      Utils.define_shell_provision node, "ansible-core installation", script_content: "pip3 install --user ansible-core==#{CONSTANTS::ANSIBLE_CORE_VERSION}", privileged: false
+
       $logger.debug(self, "Setting up the shared folder permissions...")
       provider_name = Utils.get_provider_name()
       
