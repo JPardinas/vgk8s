@@ -76,6 +76,7 @@ module Node
       if provider_name == "virtualbox"
         node.vm.synced_folder ENV['WORKING_DIRECTORY'], CONSTANTS::VM_SYNCED_FOLDER_WORKING_DIRECTORY, create: true, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
         node.vm.synced_folder ".", CONSTANTS::VM_SYNCED_FOLDER_VAGRANT, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
+        node.vm.synced_folder CONSTANTS::ANSIBLE_FOLDER_HOST, CONSTANTS::ANSIBLE_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
       end
       $logger.debug(self, "Shared folder permissions setted up.")
 
@@ -84,6 +85,10 @@ module Node
         ansible_local.install = false
         ansible_local.compatibility_mode = "2.0"
         ansible_local.verbose = true
+        ansible_local.provisioning_path = "/ansible"
+        ansible_local.playbook = "/ansible/playbooks/init.yml"
+        ansible_local.vault_password_file = "/ansible/.vault_password"
+        ansible_local.inventory_path = "/ansible/inventory/local"
       end
       
       $logger.key_value(self, "IP", ip, Logger::INFO)

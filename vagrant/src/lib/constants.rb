@@ -1,6 +1,7 @@
 module CONSTANTS
   ANSIBLE_CORE_VERSION = ENV.fetch('ANSIBLE_VERSION', '2.16.0')
-  ANSIBLE_VAULT_PASS_FILE = File.expand_path("../../.vault_password", __FILE__)
+  ANSIBLE_FOLDER_HOST = File.expand_path("../../../../ansible/", __FILE__)
+  ANSIBLE_FOLDER_TARGET = "/ansible"
   BOOT_TIMEOUT = 600
   DEFAULT_MASTER_BOX_IMAGE_NAME = "bento/ubuntu-22.04"
   DEFAULT_MASTER_BOX_IMAGE_VERSION = "202309.08.0"
