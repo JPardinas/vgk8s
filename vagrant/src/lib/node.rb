@@ -89,6 +89,7 @@ module Node
         ansible_local.playbook = "/ansible/playbooks/init.yml"
         ansible_local.vault_password_file = "/ansible/.vault_password"
         ansible_local.inventory_path = "/ansible/inventory/local"
+        ansible_local.galaxy_role_file = "/ansible/requirements/k8s-requirements.yml"
       end
       
       $logger.key_value(self, "IP", ip, Logger::INFO)
