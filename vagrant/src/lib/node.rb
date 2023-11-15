@@ -78,6 +78,13 @@ module Node
         node.vm.synced_folder ".", CONSTANTS::VM_SYNCED_FOLDER_VAGRANT, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
       end
       $logger.debug(self, "Shared folder permissions setted up.")
+
+      $logger.debug(self, "Adding the ansible_local provisioner...")
+      node.vm.provision "ansible_local" do |ansible_local| # https://developer.hashicorp.com/vagrant/docs/provisioning/ansible_common
+        ansible_local.install = false
+        ansible_local.compatibility_mode = "2.0"
+        ansible_local.verbose = true
+      end
       
       $logger.key_value(self, "IP", ip, Logger::INFO)
       $logger.success(self, "Control server #{vm_name} created.")
