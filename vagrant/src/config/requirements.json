@@ -1,8 +1,9 @@
 {
     "environment-variables": [
-        "WORKING_DIRECTORY",
-        "MASTER_BOX_IMAGE_NAME",
-        "MASTER_BOX_IMAGE_VERSION"
+        "WORKING_DIRECTORY"
+    ],
+    "providers": [
+        "virtualbox"
     ],
     "vagrant-plugins": {
         "vagrant-disksize": ["0.1.3"],

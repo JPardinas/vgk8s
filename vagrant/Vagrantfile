@@ -2,6 +2,8 @@
 # vi: set ft=ruby :
 require_relative 'src/lib/string'
 require_relative 'src/lib/constants'
+require_relative 'src/lib/custom_logger'
+require_relative 'src/lib/node'
 require_relative 'src/lib/utils'
 require_relative 'src/lib/validator'
 
@@ -16,4 +18,11 @@ Vagrant.configure("2") do |config|
   
     Validator.check_if_required_environment_variables_exist()
     Validator.check_if_work_dir_exists()
+    Validator.check_if_box_is_supported(ENV.fetch('MASTER_BOX_IMAGE_NAME'), ENV.fetch('MASTER_BOX_IMAGE_VERSION'))
+    Validator.check_if_provider_is_supported()
+
+    config.hostmanager.enabled = true # enable resolution of multi-machine environments deployed with a cloud provider where IP addresses are not known in advance
+
+    Node.define_global_variables_from_environment_variables()
+    Node.create_control_server(config)
 end

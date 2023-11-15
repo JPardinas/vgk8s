@@ -1,5 +1,4 @@
 require_relative 'constants'
-require_relative 'custom_logger'
 
 
 module Validator
@@ -30,6 +29,16 @@ module Validator
     end
 
     $logger.success(self, "Box is supported.")
+  end
+
+  def self.check_if_provider_is_supported()
+    $logger.info(self, "Checking if the provider is supported...")
+    provider_name = Utils.get_provider_name()
+    $logger.key_value(self, "Provider", provider_name, Logger::DEBUG)
+    unless CONSTANTS::VALID_PROVIDERS.include?(provider_name)
+      $logger.log_error_and_raise_exception(self, "Provider #{provider_name} is not supported. Please use one of the following providers: #{CONSTANTS::VALID_PROVIDERS}")
+    end
+    $logger.success(self, "Provider is supported.")
   end
 
   def self.check_if_required_environment_variables_exist()
