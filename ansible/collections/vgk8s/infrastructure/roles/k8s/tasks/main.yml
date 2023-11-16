@@ -1,2 +1,153 @@
 ---
 # tasks file for k8s
+- name: Disable swap
+  ansible.builtin.command: swapoff -a
+  become: true
+
+- name: Disable swap permanently, persist across reboots
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+  become: true
+
+- name: Load overlay module
+  ansible.builtin.command: modprobe overlay
+  become: true
+
+- name: Load br_netfilter module
+  ansible.builtin.command: modprobe br_netfilter
+  become: true
+
+- name: Enable ip forwarding
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/sysctl.d/kubernetes.conf
+    line: "{{ item }}"
+    create: yes
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - net.bridge.bridge-nf-call-ip6tables = 1
+    - net.bridge.bridge-nf-call-iptables = 1
+    - net.ipv4.ip_forward = 1
+
+- name: Command load new kernel parameters
+  become: true
+  ansible.builtin.command: "sysctl --system"
+
+- name: Configure containerd
+  ansible.builtin.shell: |
+    containerd config default > /home/{{ ansible_user }}/containerd-config.toml
+    sudo mv /home/{{ ansible_user }}/containerd-config.toml /etc/containerd/config.toml
+  become: true
+
+- name: Enable SystemdCgroup = true in containerd
+  ansible.builtin.replace:
+    path: /etc/containerd/config.toml
+    regexp: '^(\s*SystemdCgroup\s*=\s*false\s*)$'
+    replace: 'SystemdCgroup = true'
+  become: true
+
+- name: Restart containerd
+  ansible.builtin.service:
+    name: containerd
+    daemon_reload: yes
+    state: restarted
+  become: true
+
+- name: Install apt-transport-https, ca-certificates, curl, gnugpg
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg
+
+- name: Add Kubernetes apt-key
+  become: true
+  ansible.builtin.apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key
+    state: present
+    keyring: /etc/apt/trusted.gpg.d/kubernetes.gpg
+
+# echo 'deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/kubernetes.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
+- name: Add Kubernetes Repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/kubernetes.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /
+    state: present
+
+- name: Update apt and install kubelet, kubeadm and kubectl
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Hold kubelet, kubeadm, and kubectl at the current version
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: fixed
+    update_cache: yes
+    cache_valid_time: 3600
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Check if kubeadm is already initialized
+  become: true
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_initialized
+
+- name: Initialize kubeadm
+  become: true
+  ansible.builtin.command: "kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address={{ ansible_eth1.ipv4.address }}"
+  when: kubeadm_initialized.stat.exists == false
+
+# Configure kubectl
+- name: Create .kube directory
+  ansible.builtin.file:
+    path: $HOME/.kube
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Copy admin.conf to .kube directory
+  become: true
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/{{ ansible_user }}/.kube/config
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Install Calico
+  ansible.builtin.command: "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.3/manifests/tigera-operator.yaml"
+  when: kubeadm_initialized.stat.exists
+
+- name: Install Calico
+  ansible.builtin.command: "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.3/manifests/custom-resources.yaml"
+  when: kubeadm_initialized.stat.exists
+
+- name: Install Calico
+  ansible.builtin.command: "kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml"
+  when: kubeadm_initialized.stat.exists
+
+- name: Enable master node to schedule pods
+  ansible.builtin.command: "kubectl taint nodes --all node-role.kubernetes.io/control-plane-"
+  when: kubeadm_initialized.stat.exists
