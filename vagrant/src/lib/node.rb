@@ -84,12 +84,14 @@ module Node
       node.vm.provision "ansible_local" do |ansible_local| # https://developer.hashicorp.com/vagrant/docs/provisioning/ansible_common
         ansible_local.install = false
         ansible_local.compatibility_mode = "2.0"
-        ansible_local.verbose = true
+        ansible_local.verbose = false
         ansible_local.provisioning_path = "/ansible"
         ansible_local.playbook = "/ansible/playbooks/init.yml"
         ansible_local.vault_password_file = "/ansible/.vault_password"
         ansible_local.inventory_path = "/ansible/inventory/local"
+        ansible_local.config_file = "/ansible/ansible.cfg"
         ansible_local.galaxy_role_file = "/ansible/requirements/k8s-requirements.yml"
+        # ansible_local.galaxy_roles_path = "/home/vagrant/.ansible/collections/"
       end
       
       $logger.key_value(self, "IP", ip, Logger::INFO)
