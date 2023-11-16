@@ -65,7 +65,21 @@
     groups: docker
     append: yes
 
-# Docker Cgroup Driver
+# Create /etc/docker/daemon.json if not exists
+- name: Create /etc/docker/daemon.json if not exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/docker/daemon.json
+    state: touch
+
+# Search if native.cgroupdriver=systemd is present in /etc/docker/daemon.json
+- name: Search if native.cgroupdriver=systemd is present in /etc/docker/daemon.json
+  become: true
+  ansible.builtin.shell: cat /etc/docker/daemon.json | grep native.cgroupdriver=systemd
+  register: docker_cgroup_driver
+  ignore_errors: true
+
+# Docker Cgroup Driver, only if docker_cgroup_driver is empty
 - name: Docker Cgroup Driver
   become: true
   ansible.builtin.lineinfile:
@@ -81,8 +95,13 @@
       }
     create: yes
     state: present
+  when: docker_cgroup_driver.stdout == ""
   notify:
     - Restart docker
 
-
-
+# Verify docker service is running
+- name: Verify docker service is running
+  become: true
+  ansible.builtin.service:
+    name: docker
+    state: started
