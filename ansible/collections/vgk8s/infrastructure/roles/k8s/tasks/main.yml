@@ -125,6 +125,7 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: '0755'
+  when: kubeadm_initialized.stat.exists == false
 
 - name: Copy admin.conf to .kube directory
   become: true
@@ -135,19 +136,20 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: '0644'
+  when: kubeadm_initialized.stat.exists == false
 
 - name: Install Calico
   ansible.builtin.command: "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.3/manifests/tigera-operator.yaml"
-  when: kubeadm_initialized.stat.exists
+  when: kubeadm_initialized.stat.exists == false
 
 - name: Install Calico
   ansible.builtin.command: "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.3/manifests/custom-resources.yaml"
-  when: kubeadm_initialized.stat.exists
+  when: kubeadm_initialized.stat.exists == false
 
 - name: Install Calico
   ansible.builtin.command: "kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml"
-  when: kubeadm_initialized.stat.exists
+  when: kubeadm_initialized.stat.exists == false
 
 - name: Enable master node to schedule pods
   ansible.builtin.command: "kubectl taint nodes --all node-role.kubernetes.io/control-plane-"
-  when: kubeadm_initialized.stat.exists
+  when: kubeadm_initialized.stat.exists == false
