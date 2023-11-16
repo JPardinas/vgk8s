@@ -1,4 +1,7 @@
 module CONSTANTS
+  ANSIBLE_CORE_VERSION = ENV.fetch('ANSIBLE_VERSION', '2.16.0')
+  ANSIBLE_FOLDER_HOST = File.expand_path("../../../../ansible/", __FILE__)
+  ANSIBLE_FOLDER_TARGET = "/ansible"
   BOOT_TIMEOUT = 600
   DEFAULT_MASTER_BOX_IMAGE_NAME = "bento/ubuntu-22.04"
   DEFAULT_MASTER_BOX_IMAGE_VERSION = "202309.08.0"
@@ -12,6 +15,7 @@ module CONSTANTS
   PROVIDER_DEFAULT = "virtualbox"
   REQUIRED_ENVIRONMENT_VARIABLES = JSON.parse(File.read(File.expand_path("../../config/requirements.json", __FILE__)))["environment-variables"]
   REQUIRED_PLUGINS = JSON.parse(File.read(File.expand_path("../../config/requirements.json", __FILE__)))["vagrant-plugins"]
+  SCRIPT_INSTALL_PYTHON3 = File.expand_path('../../scripts/install-python.sh', __FILE__)
   VALID_BOXES = JSON.parse(File.read(File.expand_path("../../config/valid-boxes.json", __FILE__)))
   VALID_PROVIDERS = JSON.parse(File.read(File.expand_path("../../config/requirements.json", __FILE__)))["providers"]
   VERSION = "0.0.1"

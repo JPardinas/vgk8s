@@ -63,15 +63,36 @@ module Node
 
       $logger.debug(self, "Adding the apt update shell provisioner...")
       Utils.define_shell_provision node, "apt update", script_content: "apt update -y", privileged: true
-      
+
+      $logger.debug(self, "Adding the python3 installation shell provisioner...")
+      Utils.define_shell_provision node, "python3 installation", path_to_script: CONSTANTS::SCRIPT_INSTALL_PYTHON3, privileged: false
+
+      $logger.debug(self, "Adding the ansible-core installation shell provisioner...")
+      Utils.define_shell_provision node, "ansible-core installation", script_content: "pip3 install --user ansible-core==#{CONSTANTS::ANSIBLE_CORE_VERSION}", privileged: false
+
       $logger.debug(self, "Setting up the shared folder permissions...")
       provider_name = Utils.get_provider_name()
       
       if provider_name == "virtualbox"
         node.vm.synced_folder ENV['WORKING_DIRECTORY'], CONSTANTS::VM_SYNCED_FOLDER_WORKING_DIRECTORY, create: true, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
         node.vm.synced_folder ".", CONSTANTS::VM_SYNCED_FOLDER_VAGRANT, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
+        node.vm.synced_folder CONSTANTS::ANSIBLE_FOLDER_HOST, CONSTANTS::ANSIBLE_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
       end
       $logger.debug(self, "Shared folder permissions setted up.")
+
+      $logger.debug(self, "Adding the ansible_local provisioner...")
+      node.vm.provision "ansible_local" do |ansible_local| # https://developer.hashicorp.com/vagrant/docs/provisioning/ansible_common
+        ansible_local.install = false
+        ansible_local.compatibility_mode = "2.0"
+        ansible_local.verbose = false
+        ansible_local.provisioning_path = "/ansible"
+        ansible_local.playbook = "/ansible/playbooks/init.yml"
+        ansible_local.vault_password_file = "/ansible/.vault_password"
+        ansible_local.inventory_path = "/ansible/inventory/local"
+        ansible_local.config_file = "/ansible/ansible.cfg"
+        ansible_local.galaxy_role_file = "/ansible/requirements/k8s-requirements.yml"
+        # ansible_local.galaxy_roles_path = "/home/vagrant/.ansible/collections/"
+      end
       
       $logger.key_value(self, "IP", ip, Logger::INFO)
       $logger.success(self, "Control server #{vm_name} created.")
