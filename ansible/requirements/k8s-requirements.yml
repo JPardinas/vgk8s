@@ -5,6 +5,6 @@ collections:
   - name: kubernetes.core
     version: 2.4.0
 
-  - name: vgk8s.infra
+  - name: vgk8s.infrastructure
     type: dir
     source: /ansible/collections/vgk8s/infrastructure

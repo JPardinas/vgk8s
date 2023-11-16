@@ -13,4 +13,6 @@
         msg: "{{ echo_hello_world.stdout_lines }}"
 
     - include_role:
+        name: vgk8s.infrastructure.docker
+    - include_role:
         name: vgk8s.infrastructure.k8s
