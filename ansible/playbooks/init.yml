@@ -2,17 +2,9 @@
 - hosts: vgk8s-master
   become: false
   tasks:
-    # echo hello world
-    - name: echo hello world
-      shell: echo hello world
-      register: echo_hello_world
-
-    # debug echo hello world
-    - name: debug echo hello world
-      debug:
-        msg: "{{ echo_hello_world.stdout_lines }}"
-
     - include_role:
         name: vgk8s.infrastructure.docker
+    - include_role:
+        name: vgk8s.infrastructure.helm
     - include_role:
         name: vgk8s.infrastructure.k8s

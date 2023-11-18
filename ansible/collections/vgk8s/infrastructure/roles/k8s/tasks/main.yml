@@ -135,19 +135,22 @@
     remote_src: yes
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: '0644'
+    mode: '0600'
   when: kubeadm_initialized.stat.exists == false
 
-- name: Install Calico
-  ansible.builtin.command: "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.3/manifests/tigera-operator.yaml"
+# add helm repo add projectcalico https://docs.tigera.io/calico/charts
+- name: Add helm repo add projectcalico
+  ansible.builtin.command: "helm repo add projectcalico https://docs.tigera.io/calico/charts"
   when: kubeadm_initialized.stat.exists == false
 
-- name: Install Calico
-  ansible.builtin.command: "kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.3/manifests/custom-resources.yaml"
+# create namespace tigera-operator
+- name: Create namespace tigera-operator
+  ansible.builtin.command: "kubectl create namespace tigera-operator"
   when: kubeadm_initialized.stat.exists == false
 
-- name: Install Calico
-  ansible.builtin.command: "kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml"
+# Install the Tigera Calico operator and custom resource definitions using the Helm chart
+- name: Install the Tigera Calico operator and custom resource definitions using the Helm chart
+  ansible.builtin.command: "helm install calico projectcalico/tigera-operator --version v3.26.4 --namespace tigera-operator"
   when: kubeadm_initialized.stat.exists == false
 
 - name: Enable master node to schedule pods
