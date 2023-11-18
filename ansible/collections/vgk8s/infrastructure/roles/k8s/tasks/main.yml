@@ -138,21 +138,113 @@
     mode: '0600'
   when: kubeadm_initialized.stat.exists == false
 
-# add helm repo add projectcalico https://docs.tigera.io/calico/charts
+# CALICO
 - name: Add helm repo add projectcalico
   ansible.builtin.command: "helm repo add projectcalico https://docs.tigera.io/calico/charts"
   when: kubeadm_initialized.stat.exists == false
 
-# create namespace tigera-operator
+- name: helm repo update
+  ansible.builtin.command: "helm repo update"
+  when: kubeadm_initialized.stat.exists == false
+
 - name: Create namespace tigera-operator
   ansible.builtin.command: "kubectl create namespace tigera-operator"
   when: kubeadm_initialized.stat.exists == false
 
-# Install the Tigera Calico operator and custom resource definitions using the Helm chart
 - name: Install the Tigera Calico operator and custom resource definitions using the Helm chart
   ansible.builtin.command: "helm install calico projectcalico/tigera-operator --version v3.26.4 --namespace tigera-operator"
   when: kubeadm_initialized.stat.exists == false
 
+# Enable master node to schedule pods
+
 - name: Enable master node to schedule pods
   ansible.builtin.command: "kubectl taint nodes --all node-role.kubernetes.io/control-plane-"
   when: kubeadm_initialized.stat.exists == false
+
+# NGINX Ingress Controller
+- name: Add helm repo add ingress-nginx
+  ansible.builtin.command: "helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm repo update
+  ansible.builtin.command: "helm repo update"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm install ingress-nginx ingress-nginx/ingress-nginx --set controller.service.externalIPs[0]={{ ansible_eth1.ipv4.address }}
+  ansible.builtin.command: "helm install ingress-nginx ingress-nginx/ingress-nginx --set controller.service.externalIPs[0]={{ ansible_eth1.ipv4.address }}"
+  when: kubeadm_initialized.stat.exists == false
+
+# Setup NFS Server
+- name: Install NFS Server
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - nfs-kernel-server
+
+- name: Create NFS directory
+  become: true
+  ansible.builtin.file:
+    path: /mnt/nfs_share
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Add NFS directory to exports
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "/mnt/nfs_share *(rw,sync,no_subtree_check,no_root_squash)"
+    create: yes
+    owner: root
+    group: root
+    mode: '0644'
+  
+- name: Restart NFS Server
+  become: true
+  ansible.builtin.service:
+    name: nfs-kernel-server
+    daemon_reload: yes
+    state: restarted
+
+# Setup NFS Client Provisioner
+- name: Create namespace nfs-storage
+  ansible.builtin.command: "kubectl create namespace nfs-storage"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Add helm repo add nfs-subdir-external-provisioner
+  ansible.builtin.command: "helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm repo update
+  ansible.builtin.command: "helm repo update"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_eth1.ipv4.address }} --set nfs.path=/mnt/nfs_share --namespace nfs-storage
+  ansible.builtin.command: "helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_eth1.ipv4.address }} --set nfs.path=/mnt/nfs_share --namespace nfs-storage --set storageClass.defaultClass=true"
+  when: kubeadm_initialized.stat.exists == false
+
+# Install Prometheus with Helm
+# - name: Add helm repo add prometheus-community
+#   ansible.builtin.command: "helm repo add prometheus-community https://prometheus-community.github.io/helm-charts"
+#   when: kubeadm_initialized.stat.exists == false
+
+# - name: helm repo update
+#   ansible.builtin.command: "helm repo update"
+#   when: kubeadm_initialized.stat.exists == false
+
+# - name: Create namespace monitoring
+#   ansible.builtin.command: "kubectl create namespace monitoring"
+#   when: kubeadm_initialized.stat.exists == false
+
+# - name: helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
+#   ansible.builtin.command: "helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring"
+#   when: kubeadm_initialized.stat.exists == false
+
+# # Expose Prometheus using Ingress
+# - name: Create Ingress for Prometheus
+#   ansible.builtin.command: "kubectl apply -f /ansible/playbooks/prometheus/prometheus-ingress.yaml"
+#   when: kubeadm_initialized.stat.exists == false
