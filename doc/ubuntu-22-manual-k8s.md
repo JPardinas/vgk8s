@@ -413,9 +413,7 @@ helm uninstall prometheus
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 helm install prometheus prometheus-community/prometheus \
-  --set server.persistentVolume.storageClass=nfs-storage \
   --set server.persistentVolume.size=1Gi \
-  --set alertmanager.persistentVolume.storageClass=nfs-storage \
   --set alertmanager.persistentVolume.size=1Gi
 ```
 

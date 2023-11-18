@@ -228,23 +228,23 @@
   when: kubeadm_initialized.stat.exists == false
 
 # Install Prometheus with Helm
-# - name: Add helm repo add prometheus-community
-#   ansible.builtin.command: "helm repo add prometheus-community https://prometheus-community.github.io/helm-charts"
-#   when: kubeadm_initialized.stat.exists == false
+- name: Add helm repo add prometheus-community
+  ansible.builtin.command: "helm repo add prometheus-community https://prometheus-community.github.io/helm-charts"
+  when: kubeadm_initialized.stat.exists == false
 
-# - name: helm repo update
-#   ansible.builtin.command: "helm repo update"
-#   when: kubeadm_initialized.stat.exists == false
+- name: helm repo update
+  ansible.builtin.command: "helm repo update"
+  when: kubeadm_initialized.stat.exists == false
 
-# - name: Create namespace monitoring
-#   ansible.builtin.command: "kubectl create namespace monitoring"
-#   when: kubeadm_initialized.stat.exists == false
+- name: helm install prometheus prometheus-community/prometheus --set server.persistentVolume.size=1Gi --set alertmanager.persistentVolume.size=1Gi
+  ansible.builtin.command: "helm install prometheus prometheus-community/prometheus --set server.persistentVolume.size=1Gi --set alertmanager.persistentVolume.size=1Gi"
+  when: kubeadm_initialized.stat.exists == false
 
-# - name: helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
-#   ansible.builtin.command: "helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring"
-#   when: kubeadm_initialized.stat.exists == false
+- name: Create Ingress for Prometheus
+  ansible.builtin.command: "kubectl apply -f /ansible/playbooks/prometheus/prometheus-ingress.yaml"
+  when: kubeadm_initialized.stat.exists == false
 
-# # Expose Prometheus using Ingress
-# - name: Create Ingress for Prometheus
-#   ansible.builtin.command: "kubectl apply -f /ansible/playbooks/prometheus/prometheus-ingress.yaml"
-#   when: kubeadm_initialized.stat.exists == false
+- name: Update /etc/hosts with prometheus.example.com
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_eth1.ipv4.address }} prometheus.example.com"
