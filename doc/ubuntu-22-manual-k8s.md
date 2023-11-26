@@ -413,9 +413,7 @@ helm uninstall prometheus
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 helm install prometheus prometheus-community/prometheus \
-  --set server.persistentVolume.storageClass=nfs-storage \
   --set server.persistentVolume.size=1Gi \
-  --set alertmanager.persistentVolume.storageClass=nfs-storage \
   --set alertmanager.persistentVolume.size=1Gi
 ```
 
@@ -510,3 +508,17 @@ echo "192.168.56.100 prometheus.example.com" | sudo tee -a /etc/hosts
 ```bash
 curl http://prometheus.example.com
 ```
+
+
+echo "192.168.56.100 grafana.example.com" | sudo tee -a /etc/hosts
+
+curl http://grafana.example.com
+
+# show iptaables rules
+sudo iptables -L -n -v
+
+# Reset iptables rules and open all
+sudo iptables -P INPUT ACCEPT
+sudo iptables -P FORWARD ACCEPT
+sudo iptables -P OUTPUT ACCEPT
+sudo iptables -F
