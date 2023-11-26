@@ -508,3 +508,17 @@ echo "192.168.56.100 prometheus.example.com" | sudo tee -a /etc/hosts
 ```bash
 curl http://prometheus.example.com
 ```
+
+
+echo "192.168.56.100 grafana.example.com" | sudo tee -a /etc/hosts
+
+curl http://grafana.example.com
+
+# show iptaables rules
+sudo iptables -L -n -v
+
+# Reset iptables rules and open all
+sudo iptables -P INPUT ACCEPT
+sudo iptables -P FORWARD ACCEPT
+sudo iptables -P OUTPUT ACCEPT
+sudo iptables -F

@@ -245,6 +245,34 @@
   when: kubeadm_initialized.stat.exists == false
 
 - name: Update /etc/hosts with prometheus.example.com
+  become: true
   ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "{{ ansible_eth1.ipv4.address }} prometheus.example.com"
+
+# Install Grafana with Helm
+- name: Add helm repo add grafana
+  ansible.builtin.command: "helm repo add grafana https://grafana.github.io/helm-charts"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm repo update
+  ansible.builtin.command: "helm repo update"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Create namespace grafana
+  ansible.builtin.command: "kubectl create namespace grafana"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm install grafana grafana/grafana --set persistence.enabled=true,persistence.size=1Gi --namespace grafana
+  ansible.builtin.command: "helm install grafana grafana/grafana --set persistence.enabled=true,persistence.size=1Gi --namespace grafana"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Create Ingress for Grafana
+  ansible.builtin.command: "kubectl apply -f /ansible/playbooks/grafana/grafana-ingress.yaml"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Update /etc/hosts with grafana.example.com
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_eth1.ipv4.address }} grafana.example.com"
