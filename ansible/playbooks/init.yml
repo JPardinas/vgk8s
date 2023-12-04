@@ -2,8 +2,8 @@
 - hosts: vgk8s-master
   become: false
   tasks:
-    - include_role:
-        name: vgk8s.infrastructure.docker
+    # - include_role:
+    #     name: vgk8s.infrastructure.docker
     - include_role:
         name: vgk8s.infrastructure.helm
     - include_role:

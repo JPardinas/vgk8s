@@ -276,3 +276,29 @@
   ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "{{ ansible_eth1.ipv4.address }} grafana.example.com"
+
+# ArgoCD
+
+- name: Create namespace argocd
+  ansible.builtin.command: "kubectl create namespace argocd"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Add helm repo add argo
+  ansible.builtin.command: "helm repo add argo https://argoproj.github.io/argo-helm"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm repo update
+  ansible.builtin.command: "helm repo update"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm install argocd argo/argo-cd --namespace argocd --version 3.12.3 --set server.ingress.enabled=true --set server.ingress.hosts[0]=argocd.example.com --set server.extraArgs={--insecure} --set server.extraEnv[0].name=ARGOCD_OPTS --set server.extraEnv[0].value="--insecure"
+  ansible.builtin.command: "helm install argocd argo/argo-cd --namespace argocd --version 3.12.3 --set server.ingress.enabled=true --set server.ingress.hosts[0]=argocd.example.com --set server.extraArgs={--insecure} --set server.extraEnv[0].name=ARGOCD_OPTS --set server.extraEnv[0].value="--insecure"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Update /etc/hosts with argocd.example.com
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_eth1.ipv4.address }} argocd.example.com"
+
+    
