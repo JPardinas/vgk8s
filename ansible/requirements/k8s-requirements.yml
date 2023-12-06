@@ -2,8 +2,8 @@ collections:
   - name: community.general
     version: 7.4.0
 
-  - name: kubernetes.core
-    version: 2.4.0
+  # - name: kubernetes.core
+  #   version: 2.4.0
 
   - name: vgk8s.infrastructure
     type: dir
