@@ -293,22 +293,61 @@
   ansible.builtin.command: "kubectl taint nodes --all node-role.kubernetes.io/control-plane-"
   when: kubeadm_initialized.stat.exists == false
 
-# CALICO CNI
-- name: Add helm repo add projectcalico
-  ansible.builtin.command: "helm repo add projectcalico https://docs.tigera.io/calico/charts"
+# Flannel CNI (finally decided for flannel because calico was causing conflicts with metallb)
+- name: Create namespace kube-flannel
+  ansible.builtin.command: "kubectl create namespace kube-flannel"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Label namespace kube-flannel
+  ansible.builtin.command: "kubectl label --overwrite ns kube-flannel pod-security.kubernetes.io/enforce=privileged"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Add helm repo add flannel
+  ansible.builtin.command: "helm repo add flannel https://flannel-io.github.io/flannel/"
   when: kubeadm_initialized.stat.exists == false
 
 - name: helm repo update
   ansible.builtin.command: "helm repo update"
   when: kubeadm_initialized.stat.exists == false
 
-- name: Create namespace tigera-operator
-  ansible.builtin.command: "kubectl create namespace tigera-operator"
+- name: helm install flannel --set podCidr="10.244.0.0/16" --namespace kube-flannel flannel/flannel
+  ansible.builtin.command: "helm install flannel --set podCidr=\"10.244.0.0/16\" --namespace kube-flannel flannel/flannel"
   when: kubeadm_initialized.stat.exists == false
 
-- name: Install the Tigera Calico operator and custom resource definitions using the Helm chart
-  ansible.builtin.command: "helm install calico projectcalico/tigera-operator --version v3.26.4 --namespace tigera-operator"
+# MetalLB
+- name: helm repo add metallb https://metallb.github.io/metallb
+  ansible.builtin.command: "helm repo add metallb https://metallb.github.io/metallb"
   when: kubeadm_initialized.stat.exists == false
+
+- name: helm repo update
+  ansible.builtin.command: "helm repo update"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Create namespace metallb-system
+  ansible.builtin.command: "kubectl create namespace metallb-system"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm install metallb metallb/metallb --namespace metallb-system
+  ansible.builtin.command: "helm install metallb metallb/metallb --namespace metallb-system"
+  when: kubeadm_initialized.stat.exists == false
+
+# apiVersion: metallb.io/v1beta1
+# kind: IPAddressPool
+# metadata:
+#   name: default
+#   namespace: metallb-system
+# spec:
+#   addresses:
+#   - 192.168.56.100-192.168.56.100
+- name: Create metallb IP address pool (using echo) # TODO: improve this
+  ansible.builtin.shell: "echo 'apiVersion: metallb.io/v1beta1\nkind: IPAddressPool\nmetadata:\n  name: default\n  namespace: metallb-system\nspec:\n  addresses:\n  - {{ ansible_eth1.ipv4.address }}-{{ ansible_eth1.ipv4.address }}' > /home/{{ ansible_user }}/metallb-ipaddresspool.yaml"
+  when: kubeadm_initialized.stat.exists == false
+  
+- name: Create metallb IP address pool
+  ansible.builtin.command: "kubectl apply -f /home/{{ ansible_user }}/metallb-ipaddresspool.yaml"
+  when: kubeadm_initialized.stat.exists == false
+
+
 
 # Setup NFS Server
 - name: Install NFS Server
@@ -363,119 +402,37 @@
   ansible.builtin.command: "helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_eth1.ipv4.address }} --set nfs.path=/mnt/nfs_share --namespace nfs-storage --set storageClass.defaultClass=true"
   when: kubeadm_initialized.stat.exists == false
 
-# Setup MetalLB with helm -- DEPRECATED in favor of purelb
-# - name: Download calicoctl from https://github.com/projectcalico/calico/releases/download/v3.26.4/calicoctl-linux-amd64
-#   ansible.builtin.get_url:
-#     url: https://github.com/projectcalico/calico/releases/download/v3.26.4/calicoctl-linux-amd64
-#     dest: /home/{{ ansible_user }}/calicoctl
-#     mode: '0755'
-#   when: kubeadm_initialized.stat.exists == false
-
-# - name: install -m 755 calicoctl /usr/local/sbin/calicoctl
-#   ansible.builtin.shell: "install -m 755 /home/{{ ansible_user }}/calicoctl /usr/local/sbin/calicoctl"
-#   become: true
-#   when: kubeadm_initialized.stat.exists == false
-
-# - name: Remove calicoctl
-#   ansible.builtin.file:
-#     path: /home/{{ ansible_user }}/calicoctl
-#     state: absent
-#   become: true
-#   when: kubeadm_initialized.stat.exists == false
-
-# # apiVersion: projectcalico.org/v3
-# # kind: BGPConfiguration
-# # metadata:
-# #   name: default
-# # spec:
-# #   serviceClusterIPs:
-# #   - cidr: 10.96.0.0/16
-# #   serviceLoadBalancerIPs:
-# #   - cidr: 10.11.0.0/16
-# #   - cidr: 10.1.5.0/24
-# - name: Create bgp config file (using echo) # TODO: improve this
-#   ansible.builtin.shell: "echo 'apiVersion: projectcalico.org/v3\nkind: BGPConfiguration\nmetadata:\n  name: default\nspec:\n  serviceClusterIPs:\n  - cidr: 10.96.0.0/16\n  serviceLoadBalancerIPs:\n  - cidr: 10.11.0.0/16\n  - cidr: 10.1.5.0/24' > /home/{{ ansible_user }}/bgpconfig.yaml"
-#   when: kubeadm_initialized.stat.exists == false
-
-# - name: Apply bgp config
-#   ansible.builtin.command: "calicoctl create -f /home/{{ ansible_user }}/bgpconfig.yaml"
-#   when: kubeadm_initialized.stat.exists == false
-
-# - name: Delete bgp config file
-#   ansible.builtin.file:
-#     path: /home/{{ ansible_user }}/bgpconfig.yaml
-#     state: absent
-#   become: true
-#   when: kubeadm_initialized.stat.exists == false
-
-# - name: helm repo add metallb https://metallb.github.io/metallb
-#   ansible.builtin.command: "helm repo add metallb https://metallb.github.io/metallb"
+# # Setup PureLB with helm
+# - name: Add helm repo add purelb
+#   ansible.builtin.command: "helm repo add purelb https://gitlab.com/api/v4/projects/20400619/packages/helm/stable"
 #   when: kubeadm_initialized.stat.exists == false
 
 # - name: helm repo update
 #   ansible.builtin.command: "helm repo update"
 #   when: kubeadm_initialized.stat.exists == false
 
-# - name: Create namespace metallb-system
-#   ansible.builtin.command: "kubectl create namespace metallb-system"
+# - name: helm install --create-namespace --namespace=purelb purelb purelb/purelb
+#   ansible.builtin.command: "helm install --create-namespace --namespace=purelb purelb purelb/purelb"
 #   when: kubeadm_initialized.stat.exists == false
 
-# # - name: Get values.yaml from metallb chart
-# #   ansible.builtin.command: "helm show values metallb/metallb > /home/{{ ansible_user }}/metallb-values.yaml"
-# #   when: kubeadm_initialized.stat.exists == false
-
-# # we override speaker.enabled to false, because we are using calicoctl to configure bgp
-# - name: helm install metallb metallb/metallb --namespace metallb-system --set speaker.enabled=false
-#   ansible.builtin.command: "helm install metallb metallb/metallb --namespace metallb-system --set speaker.enabled=false"
-#   when: kubeadm_initialized.stat.exists == false
-
-# # apiVersion: metallb.io/v1beta1
-# # kind: IPAddressPool
+# # apiVersion: purelb.io/v1
+# # kind: ServiceGroup
 # # metadata:
 # #   name: default
-# #   namespace: metallb-system
+# #   namespace: purelb
 # # spec:
-# #   addresses:
-# #   - 192.168.56.100-192.168.56.100
-# - name: Create metallb IP address pool (using echo) # TODO: improve this
-#   ansible.builtin.shell: "echo 'apiVersion: metallb.io/v1beta1\nkind: IPAddressPool\nmetadata:\n  name: default\n  namespace: metallb-system\nspec:\n  addresses:\n  - {{ ansible_eth1.ipv4.address }}-{{ ansible_eth1.ipv4.address }}' > /home/{{ ansible_user }}/metallb-ipaddresspool.yaml"
+# #   local:
+# #     v4pools:
+# #     - subnet: '192.168.56.0/24'
+# #       pool: '192.168.56.100-192.168.56.200'
+# #       aggregation: /25
+# - name: Create purelb default pool
+#   ansible.builtin.shell: "echo 'apiVersion: purelb.io/v1\nkind: ServiceGroup\nmetadata:\n  name: default\n  namespace: purelb\nspec:\n  local:\n    v4pools:\n    - subnet: \"{{ ansible_eth1.ipv4.network }}/24\"\n      pool: \"{{ ansible_eth1.ipv4.address }}-{{ ansible_eth1.ipv4.address }}\"\n      aggregation: /25' > /home/{{ ansible_user }}/purelb-default-pool.yaml"
 #   when: kubeadm_initialized.stat.exists == false
-  
-# - name: Create metallb IP address pool
-#   ansible.builtin.command: "kubectl apply -f /home/{{ ansible_user }}/metallb-ipaddresspool.yaml"
+
+# - name: Create purelb default pool
+#   ansible.builtin.command: "kubectl apply -f /home/{{ ansible_user }}/purelb-default-pool.yaml"
 #   when: kubeadm_initialized.stat.exists == false
-
-# Setup PureLB with helm
-- name: Add helm repo add purelb
-  ansible.builtin.command: "helm repo add purelb https://gitlab.com/api/v4/projects/20400619/packages/helm/stable"
-  when: kubeadm_initialized.stat.exists == false
-
-- name: helm repo update
-  ansible.builtin.command: "helm repo update"
-  when: kubeadm_initialized.stat.exists == false
-
-- name: helm install --create-namespace --namespace=purelb purelb purelb/purelb
-  ansible.builtin.command: "helm install --create-namespace --namespace=purelb purelb purelb/purelb"
-  when: kubeadm_initialized.stat.exists == false
-
-# apiVersion: purelb.io/v1
-# kind: ServiceGroup
-# metadata:
-#   name: default
-#   namespace: purelb
-# spec:
-#   local:
-#     v4pools:
-#     - subnet: '192.168.56.0/24'
-#       pool: '192.168.56.100-192.168.56.200'
-#       aggregation: /25
-- name: Create purelb default pool
-  ansible.builtin.shell: "echo 'apiVersion: purelb.io/v1\nkind: ServiceGroup\nmetadata:\n  name: default\n  namespace: purelb\nspec:\n  local:\n    v4pools:\n    - subnet: \"{{ ansible_eth1.ipv4.network }}\"\n      pool: \"{{ ansible_eth1.ipv4.address }}-{{ ansible_eth1.ipv4.address }}\"\n      aggregation: /25' > /home/{{ ansible_user }}/purelb-default-pool.yaml"
-  when: kubeadm_initialized.stat.exists == false
-
-- name: Create purelb default pool
-  ansible.builtin.command: "kubectl apply -f /home/{{ ansible_user }}/purelb-default-pool.yaml"
-  when: kubeadm_initialized.stat.exists == false
 
 # # Traefik Ingress Controller <<<< not working for now, lets install metalLB first
 # - name: Create namespace traefik
