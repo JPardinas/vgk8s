@@ -166,3 +166,6 @@
       KUBELET_EXTRA_ARGS=--node-ip={{ ip_json.stdout }}
   become: true
 
+- name: Create a k alias for kubectl
+  ansible.builtin.shell: echo "alias k='kubectl'" >> /home/{{ ansible_user }}/.bashrc
+  become: false

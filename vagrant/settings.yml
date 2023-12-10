@@ -31,9 +31,9 @@ cluster:
     control_plane:
       cpu: 2
       memory: 4096
-      enable_scheduling: true
+      enable_scheduling: false
     workers:
-      count: 0
-      cpu: 1
-      memory: 2048
+      count: 1
+      cpu: 2
+      memory: 4096
 

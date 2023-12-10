@@ -1,0 +1,10 @@
+---
+- hosts: REPLACE_WORKER_HOST
+  become: false
+  tasks:
+    - include_role:
+        name: vgk8s.utils.helm
+    - include_role:
+        name: vgk8s.infrastructure.common
+    - include_role:
+        name: vgk8s.infrastructure.k8sworker

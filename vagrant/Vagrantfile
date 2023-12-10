@@ -18,4 +18,5 @@ Vagrant.configure("2") do |config|
     Validator.check_if_provider_is_supported()
 
     Node.create_control_server(config)
+    Node.create_workers(config)
 end

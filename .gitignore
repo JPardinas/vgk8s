@@ -4,5 +4,5 @@ vagrant/admin.conf
 vagrant/tmp*
 vagrant_work_dir/*
 vagrant/.env
-vagrant/configs
+vagrant/config
 doc/k8s-examples
