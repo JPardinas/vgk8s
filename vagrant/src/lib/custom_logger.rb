@@ -1,4 +1,5 @@
 require 'logger'
+require_relative 'constants'
 require_relative 'string'
 
 class CustomFormatter < Logger::Formatter
@@ -71,7 +72,7 @@ class CustomLogger < Logger
     def initialize(*args)
         super(*args)
         self.formatter = CustomFormatter.new
-        self.level = _get_logger_level(CONSTANTS::IS_DEBUG)
+        self.level = _get_logger_level()
     end
 
     def _get_level_from_word(level_as_word)
@@ -92,24 +93,17 @@ class CustomLogger < Logger
         end
     end
 
-    def _get_logger_level(is_debug)
-        if is_debug
+    def _get_logger_level()
+        if CONSTANTS::VAGRANT_IS_DEBUG
             return Logger::DEBUG
-        elsif ENV['LOGGER_LEVEL']
-            return _get_level_from_word(ENV['LOGGER_LEVEL'])
-        elsif File.exist?(CONSTANTS::ENV_FILE)
-            File.open(CONSTANTS::ENV_FILE).each do |line|
-                if line.include?('LOGGER_LEVEL')
-                    level_as_word = line.split('=')[1].strip
-                    return _get_level_from_word(level_as_word)
-                end
-            end
+        else
+            return _get_level_from_word(CONSTANTS::VAGRANT_LOG_LEVEL)
         end
         return Logger::INFO
     end
 
     def _ignore_logs_if_not_up
-        if not CONSTANTS::IS_UP and @@error_count == 0; return true; end
+        if not CONSTANTS::VAGRANT_IS_UP and @@error_count == 0; return true; end
         return false
     end
 

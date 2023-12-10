@@ -1,0 +1,11 @@
+---
+dependencies_list:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - jq
+kubernetes_package_list:
+  - kubectl
+  - kubelet
+  - kubeadm

@@ -1,5 +1,5 @@
 ---
-- hosts: vgk8s-master-node
+- hosts: REPLACE_MASTER_HOST
   become: false
   tasks:
     - include_role:
