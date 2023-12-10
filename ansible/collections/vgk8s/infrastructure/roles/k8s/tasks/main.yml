@@ -79,13 +79,9 @@
   until: result is succeeded
   retries: 5
   delay: 15
-  become: true
+  become: false
 
 - name: Taint control plane nodes
   ansible.builtin.command: kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
   when: cluster.nodes.control_plane.enable_scheduling is defined and cluster.nodes.control_plane.enable_scheduling == true
-  become: true
-
-- name: Create a k alias for kubectl
-  ansible.builtin.shell: echo "alias k='kubectl'" >> /home/{{ ansible_user }}/.bashrc
-  become: true
+  become: false

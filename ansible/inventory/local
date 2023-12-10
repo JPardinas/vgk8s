@@ -1,2 +1,2 @@
 [local]
-vgk8s-master-node ansible_connection=local
+vgk8s-worker-node01 ansible_connection=local
