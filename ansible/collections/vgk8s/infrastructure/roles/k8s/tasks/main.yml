@@ -35,16 +35,6 @@
     group: "{{ ansible_user }}"
     mode: '0600'
 
-- name: Copy admin.conf to /vagrant directory
-  become: true
-  ansible.builtin.copy:
-    src: /etc/kubernetes/admin.conf
-    dest: /vagrant/admin.conf
-    remote_src: yes
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0600'
-
 - name: Ensure {{ config_path }} directory exists
   ansible.builtin.file:
     path: "{{ config_path }}"

@@ -40,7 +40,9 @@ v#{CONSTANTS::VERSION}
         # - :path_to_script (String, path to the script file) - Optional
         # - :script_content (String, content of the script) - Optional
         # - :privileged (Boolean, whether the provisioner should run with elevated privileges) - Optional, default: false
+        # - :args (string or Array, arguments to pass to the script) - Optional
         privileged = options[:privileged] || false
+        args = options[:args] || nil
 
         if options[:path_to_script].nil? && options[:script_content].nil?
             $logger.log_error_and_raise_exception(self, "Either script_content or path_to_script must be defined")
@@ -61,7 +63,7 @@ v#{CONSTANTS::VERSION}
         echo_title = "echo \"#{title} | Start\""
         echo_title_end = "echo \"#{title} | End\""
         script_content = "#{echo_title}\n#{script_content}\n#{echo_title_end}"
-        node.vm.provision "shell", inline: script_content, privileged: privileged
+        node.vm.provision "shell", inline: script_content, privileged: privileged, args: args
     end
 
 end

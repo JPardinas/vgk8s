@@ -52,7 +52,7 @@ module Node
       end
 
       $logger.debug(self, "Adding the keyboard layout shell provisioner...")
-      Utils.define_shell_provision node, "keyboard layout", path_to_script: CONSTANTS::SCRIPT_KEYBOARD, privileged: false
+      Utils.define_shell_provision node, "keyboard layout", path_to_script: CONSTANTS::SCRIPT_KEYBOARD, privileged: false, args: CONSTANTS::VAGRANT_KEYBOARD_LAYOUT
 
       $logger.debug(self, "Adding the apt update shell provisioner...")
       Utils.define_shell_provision node, "apt update", script_content: "apt update -y", privileged: true
