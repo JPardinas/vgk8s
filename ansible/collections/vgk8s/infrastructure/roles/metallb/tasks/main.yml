@@ -1,0 +1,34 @@
+---
+- include_vars: "/vagrant/settings.yml"
+
+# https://metallb.universe.tf/configuration/calico/ changes needed???
+# - name: Install calicoctl
+#   become: true
+#   ansible.builtin.command: |
+#     curl -o /usr/local/bin/calicoctl -O -L  "https://github.com/projectcalico/calico/releases/download/v3.26.4/calicoctl-linux-amd64"
+#     chmod +x /usr/local/bin/calicoctl
+
+- name: Add metallb helm repository
+  ansible.builtin.command: helm repo add metallb https://metallb.github.io/metallb
+
+- name: Create namespace metallb-system
+  ansible.builtin.command: "kubectl create namespace metallb-system"
+
+- name: Install metallb
+  ansible.builtin.command: helm install metallb metallb/metallb --namespace metallb-system
+
+- name: Create metallb IPAddressPool.yml into {{ config_path }} directory
+  ansible.builtin.shell: |
+    cat <<EOF > {{ config_path }}/IPAddressPool.yml
+    apiVersion: metallb.io/v1beta1
+    kind: IPAddressPool
+    metadata:
+      name: default
+      namespace: metallb-system
+    spec:
+      addresses:
+          - {{ cluster.network.metallb.start }}-{{ cluster.network.metallb.end }}
+    EOF
+
+- name: Create metallb IPAddressPool
+  ansible.builtin.command: kubectl apply -f {{ config_path }}/IPAddressPool.yml
