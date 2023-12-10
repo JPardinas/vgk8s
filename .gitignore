@@ -1,5 +1,8 @@
 vagrant/.vagrant
 vagrant/outputs/
+vagrant/admin.conf
+vagrant/tmp*
 vagrant_work_dir/*
 vagrant/.env
-doc/k8s-examples/*
+vagrant/configs
+doc/k8s-examples

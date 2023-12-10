@@ -4,8 +4,8 @@ collections:
 
   - name: vgk8s.infrastructure
     type: dir
-    source: /home/vagrant/ansible/collections/vgk8s/infrastructure
+    source: REPLACE_LOCATION/collections/vgk8s/infrastructure
 
   - name: vgk8s.utils
     type: dir
-    source: /home/vagrant/ansible/collections/vgk8s/utils
+    source: REPLACE_LOCATION/collections/vgk8s/utils

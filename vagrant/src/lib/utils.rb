@@ -5,7 +5,7 @@ module Utils
     @@count = 0
 
     def self.get_provider_name
-        provider_name = ENV.fetch('VAGRANT_DEFAULT_PROVIDER', CONSTANTS::PROVIDER_DEFAULT)
+        provider_name = CONSTANTS::VAGRANT_PROVIDER
         ARGV.each do|a|
             if a.include?('--provider=')
                 provider_name = a.split('=')[1]

@@ -1,0 +1,168 @@
+---
+- include_vars: "/vagrant/settings.yml"
+
+- set_fact:
+    DNS_SERVERS: "{{ cluster.network.dns_servers | join(' ') }}"
+    KUBERNETES_VERSION: "{{ cluster.software.kubernetes | regex_search('([0-9]+\\.[0-9]+)', '\\1') }}"
+
+- name: Ensure /etc/systemd/resolved.conf.d/ directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/resolved.conf.d/
+    state: directory
+  become: true
+
+- name: Define DNS servers
+  ansible.builtin.copy:
+    dest: /etc/systemd/resolved.conf.d/dns_servers.conf
+    content: |
+      [Resolve]
+      DNS={{ DNS_SERVERS }}
+  become: true
+  notify: Restart systemd-resolved
+
+- name: Disable swap
+  ansible.builtin.command: swapoff -a
+  become: true
+
+- name: Disable swap permanently, persist across reboots
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+  become: true
+
+- name: Create the .conf file to load the modules at bootup
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/crio.conf
+    content: |
+      overlay
+      br_netfilter
+  become: true
+
+- name: Letting iptables see bridged traffic
+  ansible.builtin.command: modprobe overlay
+  become: true
+
+- name: Letting iptables see bridged traffic
+  ansible.builtin.command: modprobe br_netfilter
+  become: true
+
+- name: Set up required sysctl params
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-kubernetes-cri.conf
+    content: |
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.ipv4.ip_forward                 = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+  become: true
+
+- name: Reload sysctl
+  ansible.builtin.command: sysctl --system
+  become: true
+
+- name: Ensure /etc/apt/keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Import GPG key for {{ cluster.software.os }} repository
+  ansible.builtin.apt_key:
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ cluster.software.os }}/Release.key
+    state: present
+    keyring: /etc/apt/trusted.gpg.d/{{ cluster.software.os }}-apt-keyring.gpg
+  become: true
+
+- name: Import GPG key for cri-o repository
+  ansible.builtin.apt_key:
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ KUBERNETES_VERSION | first }}/{{ cluster.software.os }}/Release.key
+    state: present
+    keyring: /etc/apt/trusted.gpg.d/cri-o-apt-keyring.gpg
+  become: true
+
+- name: Add {{ cluster.software.os }} repository
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/etc/apt/trusted.gpg.d/{{ cluster.software.os }}-apt-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ cluster.software.os }}/ /
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Add cri-o repository
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/etc/apt/trusted.gpg.d/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ KUBERNETES_VERSION | first }}/{{ cluster.software.os }}/ /
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Install cri-o
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  become: true
+  loop:
+    - cri-o
+    - cri-o-runc
+
+- name: Enable cri-o service
+  ansible.builtin.service:
+    name: crio
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
+
+- name: Install dependencies
+  ansible.builtin.apt: 
+    name: "{{ dependencies_list }}"
+    state: present
+    update_cache: true
+  become: true
+
+- name: Add the Kubernetes repository key
+  become: true
+  ansible.builtin.apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v{{ KUBERNETES_VERSION | first }}/deb/Release.key
+    state: present
+    keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Add the Kubernetes repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ KUBERNETES_VERSION | first }}/deb/ /
+    state: present
+
+- name: Install kubernetes packages
+  become: true
+  ansible.builtin.apt: 
+    name: "{{ item }}={{ cluster.software.kubernetes }}"
+    state: present
+    update_cache: true
+  loop:
+    - kubelet
+    - kubectl
+    - kubeadm
+
+- name: Hold kubernetes packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: fixed
+  loop:
+    - kubelet
+    - kubectl
+    - kubeadm
+
+- name: Get local ip
+  ansible.builtin.shell: ip --json a s | jq -r '.[] | if .ifname == "eth1" then .addr_info[] | if .family == "inet" then .local else empty end else empty end'
+  register: ip_json
+  changed_when: false
+
+- name: Set up kubelet configuration KUBELET_EXTRA_ARGS=--node-ip={{ ip_json.stdout }}
+  ansible.builtin.copy:
+    dest: /etc/default/kubelet
+    content: |
+      KUBELET_EXTRA_ARGS=--node-ip={{ ip_json.stdout }}
+  become: true
+

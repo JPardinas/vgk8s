@@ -1,14 +1,8 @@
 {
-    "environment-variables": [
-        "WORKING_DIRECTORY"
-    ],
     "providers": [
         "virtualbox"
     ],
     "vagrant-plugins": {
-        "vagrant-disksize": ["0.1.3"],
-        "vagrant-hostmanager": ["1.8.10"],
-        "vagrant-env": ["0.0.3"],
         "vagrant-timezone": ["1.3.0"]
     }
 }

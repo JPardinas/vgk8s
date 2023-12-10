@@ -12,17 +12,10 @@ Utils.print_banner()
 Validator.check_required_plugins_are_installed()
 
 Vagrant.configure("2") do |config|
-
-    config.env.enable
-    config.timezone.value = ENV.fetch('ENV_TIMEZONE',:host)
+    config.timezone.value = CONSTANTS::VAGRANT_TIMEZONE
   
-    Validator.check_if_required_environment_variables_exist()
-    Validator.check_if_work_dir_exists()
-    Validator.check_if_box_is_supported(ENV.fetch('MASTER_BOX_IMAGE_NAME'), ENV.fetch('MASTER_BOX_IMAGE_VERSION'))
+    Validator.check_if_box_is_supported()
     Validator.check_if_provider_is_supported()
 
-    config.hostmanager.enabled = true # enable resolution of multi-machine environments deployed with a cloud provider where IP addresses are not known in advance
-
-    Node.define_global_variables_from_environment_variables()
     Node.create_control_server(config)
 end
