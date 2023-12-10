@@ -1,4 +1,5 @@
 ---
+ansible_user: vagrant
 dependencies_list:
   - apt-transport-https
   - ca-certificates

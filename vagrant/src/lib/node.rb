@@ -15,11 +15,15 @@ module Node
     num_worker_nodes = CONSTANTS::CLUSTER_NODES_WORKERS_COUNT
 
     # TODO: verify working as expected
-    config.vm.provision "shell", env: { "IP_NW" => ip_nw, "IP_START" => ip_start, "NUM_WORKER_NODES" => num_worker_nodes }, inline: <<-SHELL
-      apt-get update -y
-      echo "$IP_NW$((IP_START)) vgk8s-master-node" >> /etc/hosts
+    config.vm.provision "shell", env: { "IP_NW" => ip_nw, "IP_START" => ip_start, "NUM_WORKER_NODES" => num_worker_nodes }, privileged: true,inline: <<-SHELL
+      sudo apt-get update -y
+      echo "$IP_NW$((IP_START)) vgk8s-master-node" | sudo tee /etc/hosts
       for i in `seq 1 ${NUM_WORKER_NODES}`; do
-        echo "$IP_NW$((IP_START+i)) vgk8s-worker-node0${i}" >> /etc/hosts
+        if [ $i -lt 10 ]; then
+          echo "$IP_NW$((IP_START+i)) vgk8s-worker-node0${i}" | sudo tee /etc/hosts
+        else
+          echo "$IP_NW$((IP_START+i)) vgk8s-worker-node${i}" | sudo tee /etc/hosts
+        fi
       done
     SHELL
 
@@ -52,7 +56,7 @@ module Node
       end
 
       $logger.debug(self, "Adding the keyboard layout shell provisioner...")
-      Utils.define_shell_provision node, "keyboard layout", path_to_script: CONSTANTS::SCRIPT_KEYBOARD, privileged: false
+      Utils.define_shell_provision node, "keyboard layout", path_to_script: CONSTANTS::SCRIPT_KEYBOARD, privileged: false, args: CONSTANTS::VAGRANT_KEYBOARD_LAYOUT
 
       $logger.debug(self, "Adding the apt update shell provisioner...")
       Utils.define_shell_provision node, "apt update", script_content: "apt update -y", privileged: true

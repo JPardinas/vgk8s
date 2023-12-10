@@ -35,6 +35,7 @@ module CONSTANTS
   VAGRANT_BOOT_TIMEOUT = SETTINGS["vagrant"]["boot_timeout"]
   VAGRANT_BOX_NAME = SETTINGS["vagrant"]["box_name"]
   VAGRANT_BOX_VERSION = SETTINGS["vagrant"]["box_version"]
+  VAGRANT_KEYBOARD_LAYOUT = SETTINGS["vagrant"]["keyboard_layout"]
   VAGRANT_IS_DEBUG = ARGV.include?('--debug')
   VAGRANT_IS_UP = ARGV.include?('up')
   VAGRANT_LOG_LEVEL = SETTINGS["vagrant"]["log_level"]
