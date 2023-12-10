@@ -41,6 +41,12 @@
     state: directory
   become: true
 
+- name: Remove {{ config_path }}/admin.conf
+  ansible.builtin.file:
+    path: "{{ config_path }}/admin.conf"
+    state: absent
+  become: true
+
 - name: Copy admin.conf to {{ config_path }} directory
   become: true
   ansible.builtin.copy:

@@ -1,7 +1,7 @@
 ---
 ansible:
   version: 2.16.0
-  folder_path: /home/vagrant/ansible
+  folder_path: /ansible
 vagrant:
   boot_timeout: 600
   box_name: bento/ubuntu-22.04
@@ -9,7 +9,7 @@ vagrant:
   log_level: DEBUG
   provider: virtualbox
   timezone: Europe/Madrid
-  keyboard: es
+  keyboard_layout: es
 virtual_box:
   vm_group_name: VGK8S Kubernetes Cluster
   network:
@@ -29,11 +29,11 @@ cluster:
     service_cidr: 172.17.1.0/18
   nodes:
     control_plane:
-      cpu: 2
-      memory: 4096
-      enable_scheduling: false
+      cpu: 4
+      memory: 8192
+      enable_scheduling: true
     workers:
-      count: 1
-      cpu: 2
+      count: 0
+      cpu: 4
       memory: 4096
 
