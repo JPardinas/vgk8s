@@ -1,0 +1,43 @@
+---
+- include_vars: "/vagrant/settings.yml"
+
+- name: Create namespace traefik-v2
+  ansible.builtin.command: "kubectl create namespace traefik-v2"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Add helm repo add traefik
+  ansible.builtin.command: "helm repo add traefik https://traefik.github.io/charts"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: helm install traefik traefik/traefik --namespace=traefik-v2
+  ansible.builtin.command: "helm install traefik traefik/traefik --namespace=traefik-v2"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Create traefik dashboard IngressRoute into {{ config_path }} directory
+  ansible.builtin.shell: |
+    cat <<EOF > {{ config_path }}/traefik-dashboard.yaml
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: dashboard
+      namespace: traefik-v2
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - match: Host(`traefik.vgk8s.com`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+          kind: Rule
+          services:
+            - name: api@internal
+              kind: TraefikService
+    EOF
+
+- name: Create IngressRoute for Traefik Dashboard
+  ansible.builtin.command: "kubectl apply -f {{ config_path }}/traefik-dashboard.yaml"
+  when: kubeadm_initialized.stat.exists == false
+
+- name: Update /etc/hosts with traefik.vgk8s.com
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ cluster.network.control_ip }} traefik.vgk8s.com"
