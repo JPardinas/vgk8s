@@ -8,3 +8,9 @@
         name: vgk8s.infrastructure.common
     - include_role:
         name: vgk8s.infrastructure.k8s
+    - include_role:
+        name: vgk8s.infrastructure.metallb
+    - include_role:
+        name: vgk8s.infrastructure.traefik
+    - include_role:
+        name: vgk8s.infrastructure.argocd

@@ -32,3 +32,8 @@
 
 - name: Create metallb IPAddressPool
   ansible.builtin.command: kubectl apply -f {{ config_path }}/IPAddressPool.yml
+  become: false
+  retries: 10
+  delay: 20
+  register: result
+  until: result is succeeded
