@@ -1,11 +1,13 @@
 ---
+charts:
+  folder_path: /charts
 ansible:
   version: 2.16.0
   folder_path: /ansible
 vagrant:
   boot_timeout: 600
   box_name: bento/ubuntu-22.04
-  box_version: 202309.08.0
+  box_version: 202303.13.0
   log_level: DEBUG
   provider: virtualbox
   timezone: Europe/Madrid

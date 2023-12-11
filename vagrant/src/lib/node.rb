@@ -36,7 +36,7 @@ module Node
 
       node.vm.box = CONSTANTS::VAGRANT_BOX_NAME
       node.vm.box_version = CONSTANTS::VAGRANT_BOX_VERSION
-      node.vm.box_check_update = true
+      node.vm.box_check_update = false
 
       node.vm.hostname = vm_name
 
@@ -54,6 +54,9 @@ module Node
         vb.cpus = CONSTANTS::CLUSTER_NODES_CONTROL_PLANE_CPU
         vb.customize ["modifyvm", :id, "--groups", ("/" + CONSTANTS::VBOX_VM_GROUP_NAME)]
       end
+
+      $logger.debug(self, "Adding the charts folder sync...")
+      node.vm.synced_folder CONSTANTS::CHARTS_FOLDER_HOST, CONSTANTS::CHARTS_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
 
       $logger.debug(self, "Adding the keyboard layout shell provisioner...")
       Utils.define_shell_provision node, "keyboard layout", path_to_script: CONSTANTS::SCRIPT_KEYBOARD, privileged: false, args: CONSTANTS::VAGRANT_KEYBOARD_LAYOUT
@@ -124,7 +127,7 @@ module Node
 
         node.vm.box = CONSTANTS::VAGRANT_BOX_NAME
         node.vm.box_version = CONSTANTS::VAGRANT_BOX_VERSION
-        node.vm.box_check_update = true
+        node.vm.box_check_update = false
 
         node.vm.hostname = vm_name
 
@@ -143,6 +146,9 @@ module Node
           vb.cpus = CONSTANTS::CLUSTER_NODES_WORKERS_CPU
           vb.customize ["modifyvm", :id, "--groups", ("/" + CONSTANTS::VBOX_VM_GROUP_NAME)]
         end
+
+        $logger.debug(self, "Adding the charts folder sync...")
+        node.vm.synced_folder CONSTANTS::CHARTS_FOLDER_HOST, CONSTANTS::CHARTS_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
 
         $logger.debug(self, "Adding the keyboard layout shell provisioner...")
         Utils.define_shell_provision node, "keyboard layout", path_to_script: CONSTANTS::SCRIPT_KEYBOARD, privileged: false

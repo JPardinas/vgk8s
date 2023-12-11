@@ -7,6 +7,9 @@ module CONSTANTS
   ANSIBLE_CORE_VERSION = SETTINGS["ansible"]["version"]
   ANSIBLE_FOLDER_HOST = File.expand_path("../../../../ansible/", __FILE__)
   ANSIBLE_FOLDER_TARGET = SETTINGS["ansible"]["folder_path"]
+  
+  CHARTS_FOLDER_HOST = File.expand_path("../../../../charts/", __FILE__)
+  CHARTS_FOLDER_TARGET = SETTINGS["charts"]["folder_path"]
 
   CLUSTER_SOFTWARE_CALICO = SETTINGS["cluster"]["software"]["calico"]
   CLUSTER_SOFTWARE_KUBERNETES = SETTINGS["cluster"]["software"]["kubernetes"]
