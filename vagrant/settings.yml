@@ -19,7 +19,7 @@ virtual_box:
   network:
     hostname_prefix: vgk8s-
     private_ip: 192.168.56.100
-    nic_type: Am79C973
+    nic_type: virtio
 cluster:
   software:
     calico: 3.26.0

@@ -62,56 +62,6 @@
   ansible.builtin.shell: kubeadm token create --print-join-command > {{ config_path }}/join.sh
   become: true
 
-# curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/calico.yaml -O
-- name: Download Calico manifest
-  ansible.builtin.get_url:
-    url: https://raw.githubusercontent.com/projectcalico/calico/v{{ cluster.software.calico }}/manifests/calico.yaml
-    dest: "{{ config_path }}/calico.yaml"
-    mode: '0644'
-  become: true
-
-- name: Apply Calico manifest
-  ansible.builtin.command: kubectl apply -f {{ config_path }}/calico.yaml
-  register: result
-  until: result is succeeded
-  retries: 5
-  delay: 15
-  become: false
-
-# # https://github.com/flannel-io/flannel/releases/download/v0.23.0/kube-flannel.yml
-# - name: Download flannel manifest
-#   ansible.builtin.get_url:
-#     url: https://github.com/flannel-io/flannel/releases/download/v0.23.0/kube-flannel.yml
-#     dest: "{{ config_path }}/kube-flannel.yaml"
-#     mode: '0644'
-#   become: true
-
-# - name: Apply flannel manifest
-#   ansible.builtin.command: kubectl apply -f {{ config_path }}/kube-flannel.yaml
-#   register: result
-#   until: result is succeeded
-#   retries: 5
-#   delay: 15
-#   become: false
-
-# Flannel CNI (finally decided for flannel because calico was causing conflicts with metallb)
-# - name: Create namespace kube-flannel
-#   ansible.builtin.command: "kubectl create namespace kube-flannel"
-
-# - name: Label namespace kube-flannel
-#   ansible.builtin.command: "kubectl label --overwrite ns kube-flannel pod-security.kubernetes.io/enforce=privileged"
-
-# - name: Add helm repo add flannel
-#   ansible.builtin.command: "helm repo add flannel https://flannel-io.github.io/flannel/"
-
-# - name: helm repo update
-#   ansible.builtin.command: "helm repo update"
-
-# # - name: helm install flannel --set podCidr="{{ cluster.network.pod_cidr }}" --namespace kube-flannel flannel/flannel
-# #   ansible.builtin.command: "helm install flannel --set podCidr=\"{{ cluster.network.pod_cidr }}\" --namespace kube-flannel flannel/flannel"
-# - name: helm install flannel --namespace kube-flannel flannel/flannel
-#   ansible.builtin.command: "helm install flannel --namespace kube-flannel flannel/flannel"
-
 - name: Taint control plane nodes
   ansible.builtin.command: kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
   when: cluster.nodes.control_plane.enable_scheduling is defined and cluster.nodes.control_plane.enable_scheduling == true

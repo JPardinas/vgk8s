@@ -1,0 +1,18 @@
+---
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
+
+- name: Download Calico manifest
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/projectcalico/calico/v{{ cluster.software.calico }}/manifests/calico.yaml
+    dest: "{{ config_path }}/calico.yaml"
+    mode: '0644'
+  become: true
+
+- name: Apply Calico manifest
+  ansible.builtin.command: kubectl apply -f {{ config_path }}/calico.yaml
+  register: result
+  until: result is succeeded
+  retries: 5
+  delay: 15
+  become: false

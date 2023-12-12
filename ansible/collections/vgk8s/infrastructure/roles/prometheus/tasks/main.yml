@@ -1,0 +1,64 @@
+---
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
+
+- name: Add helm repository
+  ansible.builtin.command: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+- name: Install prometheus
+  ansible.builtin.command: helm install prometheus prometheus-community/prometheus --namespace monitoring --create-namespace
+
+# app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=prometheus
+- name: Create prometheus service into {{ config_path }} directory
+  ansible.builtin.shell: |
+    cat <<EOF > {{ config_path }}/prometheus-svc.yaml
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: prometheus
+      namespace: monitoring
+    spec:
+      selector:
+        app.kubernetes.io/name: prometheus
+        app.kubernetes.io/instance: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090
+          targetPort: 9090
+    EOF
+
+- name: Create Service for Prometheus
+  ansible.builtin.command: "kubectl apply -f {{ config_path }}/prometheus-svc.yaml"
+  become: false
+
+- name: Create prometheus IngressRoute into {{ config_path }} directory
+  ansible.builtin.shell: |
+    cat <<EOF > {{ config_path }}/prometheus.yaml
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: prometheus
+      namespace: monitoring
+    spec:
+      rules:
+        - host: prometheus.vgk8s.com
+          http:
+            paths:
+              - pathType: Prefix
+                path: "/"
+                backend:
+                  service:
+                    name: prometheus
+                    port:
+                      number: 9090
+    EOF
+
+- name: Create IngressRoute for Prometheus
+  ansible.builtin.command: "kubectl apply -f {{ config_path }}/prometheus.yaml"
+  become: false
+
+- name: Update /etc/hosts with prometheus.vgk8s.com
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ cluster.network.control_ip }} prometheus.vgk8s.com"
