@@ -1,5 +1,6 @@
 ---
-- include_vars: "/vagrant/settings.yml"
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
 
 - set_fact:
     DNS_SERVERS: "{{ cluster.network.dns_servers | join(' ') }}"

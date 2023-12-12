@@ -25,6 +25,13 @@ From Terminal (Admin) shell (opened with Win+X):
 
 powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VBoxHeadless.exe"
 powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VirtualBoxVM.exe"
+powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VBoxNetDHCP.exe"
+powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VBoxNetNAT.exe"
+powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VBoxSDS.exe"
+powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VBoxSVC.exe"
+powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VirtualBox.exe"
+powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe"
+powercfg /powerthrottling disable /path "C:\Program Files\Vagrant\bin\vagrant.exe"
 powercfg /powerthrottling list
 
 Battery Usage Settings By App

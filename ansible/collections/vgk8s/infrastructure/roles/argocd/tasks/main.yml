@@ -1,0 +1,44 @@
+---
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
+
+# - name: Create namespace argocd
+#   ansible.builtin.command: "kubectl create namespace argocd"
+#   become: false
+
+# - name: Add helm repo add argo
+#   ansible.builtin.command: "helm repo add argo-cd https://argoproj.github.io/argo-helm"
+#   become: false
+
+# - name: helm install argocd argo/argo-cd --namespace argocd --version 3.12.3 --set server.ingress.enabled=true --set server.ingress.hosts[0]=argocd.example.com --set server.extraArgs={--insecure} --set server.extraEnv[0].name=ARGOCD_OPTS --set server.extraEnv[0].value="--insecure"
+#   ansible.builtin.command: "helm install argocd argo/argo-cd --namespace argocd --version 3.12.3 --set server.ingress.enabled=true --set server.ingress.hosts[0]=argocd.vgk8s.com --set server.extraArgs={--insecure} --set server.extraEnv[0].name=ARGOCD_OPTS --set server.extraEnv[0].value=\"--insecure\""
+#   become: false
+
+# # - name: Create argocd IngressRoute into {{ config_path }} directory
+# #   ansible.builtin.shell: |
+# #     cat <<EOF > {{ config_path }}/traefik-argocd.yaml
+# #     apiVersion: traefik.io/v1alpha1
+# #     kind: IngressRoute
+# #     metadata:
+# #       name: dashboard
+# #       namespace: traefik-v2
+# #     spec:
+# #       entryPoints:
+# #         - web
+# #       routes:
+# #         - match: Host(`argocd.vgk8s.com`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+# #           kind: Rule
+# #           services:
+# #             - name: api@internal
+# #               kind: TraefikService
+# #     EOF
+
+# # - name: Create IngressRoute for ArgoCD
+# #   ansible.builtin.command: "kubectl apply -f {{ config_path }}/traefik-argocd.yaml"
+# #   when: kubeadm_initialized.stat.exists == false
+
+# - name: Update /etc/hosts with argocd.vgk8s.com
+#   become: true
+#   ansible.builtin.lineinfile:
+#     path: /etc/hosts
+#     line: "{{ cluster.network.control_ip }} argocd.vgk8s.com"

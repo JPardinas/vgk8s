@@ -12,8 +12,9 @@ Utils.print_banner()
 Validator.check_required_plugins_are_installed()
 
 Vagrant.configure("2") do |config|
-    config.timezone.value = CONSTANTS::VAGRANT_TIMEZONE
-  
+    # config.timezone.value = CONSTANTS::VAGRANT_TIMEZONE
+    
+    Validator.validate_windows_wsl()
     Validator.check_if_box_is_supported()
     Validator.check_if_provider_is_supported()
 

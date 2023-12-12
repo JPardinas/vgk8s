@@ -1,40 +1,62 @@
 ---
-- include_vars: "/vagrant/settings.yml"
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
 
 - name: Create namespace traefik-v2
   ansible.builtin.command: "kubectl create namespace traefik-v2"
-  when: kubeadm_initialized.stat.exists == false
 
 - name: Add helm repo add traefik
   ansible.builtin.command: "helm repo add traefik https://traefik.github.io/charts"
-  when: kubeadm_initialized.stat.exists == false
 
 - name: helm install traefik traefik/traefik --namespace=traefik-v2
   ansible.builtin.command: "helm install traefik traefik/traefik --namespace=traefik-v2"
-  when: kubeadm_initialized.stat.exists == false
+
+- name: Create traefik-dashboard service into {{ config_path }} directory
+  ansible.builtin.shell: |
+    cat <<EOF > {{ config_path }}/traefik-dashboard-svc.yaml
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: traefik-dashboard
+      namespace: traefik-v2
+    spec:
+      selector:
+        app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 9000
+          targetPort: 9000
+    EOF
+
+- name: Create Service for Traefik Dashboard
+  ansible.builtin.command: "kubectl apply -f {{ config_path }}/traefik-dashboard-svc.yaml"
+  become: false
 
 - name: Create traefik dashboard IngressRoute into {{ config_path }} directory
   ansible.builtin.shell: |
     cat <<EOF > {{ config_path }}/traefik-dashboard.yaml
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
-      name: dashboard
+      name: traefik-dashboard
       namespace: traefik-v2
     spec:
-      entryPoints:
-        - web
-      routes:
-        - match: Host(`traefik.vgk8s.com`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
-          kind: Rule
-          services:
-            - name: api@internal
-              kind: TraefikService
+      rules:
+        - host: traefik.vgk8s.com
+          http:
+            paths:
+              - pathType: Prefix
+                path: "/"
+                backend:
+                  service:
+                    name: traefik-dashboard
+                    port:
+                      number: 9000
     EOF
 
 - name: Create IngressRoute for Traefik Dashboard
   ansible.builtin.command: "kubectl apply -f {{ config_path }}/traefik-dashboard.yaml"
-  when: kubeadm_initialized.stat.exists == false
+  become: false
 
 - name: Update /etc/hosts with traefik.vgk8s.com
   become: true

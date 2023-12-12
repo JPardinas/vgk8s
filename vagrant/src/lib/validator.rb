@@ -46,6 +46,7 @@ module Validator
     # plugins is a map of key-value pairs, value are the versions in an array
     plugins.each do |plugin, versions|
       unless Vagrant.has_plugin?(plugin)
+        version = versions[0]
         not_installed_plugins << { plugin: plugin, version: version }
       else
         $logger.key_value(self, "Plugin #{plugin} is installed", Vagrant.has_plugin?(plugin), Logger::DEBUG)
@@ -59,6 +60,10 @@ module Validator
     $logger.info(self, "Checking if the required plugins are installed...")
     $logger.key_value(self, "Plugins", CONSTANTS::REQUIRED_PLUGINS, Logger::DEBUG)
     not_installed_plugins = _get_not_installed_plugins_list(CONSTANTS::REQUIRED_PLUGINS)
+    if CONSTANTS::VAGRANT_IS_WINDOWS_WSL
+      not_installed_plugins_windows = _get_not_installed_plugins_list(CONSTANTS::REQUIRED_PLUGINS_WINDOWS)
+      not_installed_plugins = not_installed_plugins + not_installed_plugins_windows
+    end
 
     if not_installed_plugins.length > 0
         prompt_and_install_missing_plugins(not_installed_plugins)
@@ -84,6 +89,37 @@ module Validator
       $logger.log_error_and_raise_exception(self, "Exiting because required plugins are not installed.")
     end
       $logger.log_error_and_raise_exception(self, "Exiting because plugins are not detected until next run. Please run 'vagrant up' again.")
+  end
+
+  def self.validate_windows_wsl()
+    if CONSTANTS::VAGRANT_IS_WINDOWS_WSL
+      $logger.info(self, "Detected Windows WSL.")
+      $logger.info(self, "Checking if /etc/vbox/networks.conf contains 10.0.0.0/8")
+      file = "/etc/vbox/networks.conf"
+      # check if file exists
+      unless File.file?(file)
+        $logger.log_error_and_raise_exception(self, "File #{file} does not exist. Please create it and add 10.0.0.0/8 to it.")
+      end
+
+      if File.readlines("/etc/vbox/networks.conf").any? { |line| line.include?("10.0.0.0/8") }
+        $logger.success(self, "10.0.0.0/8 is present in /etc/vbox/networks.conf")
+      else
+        $logger.log_error_and_raise_exception(self, "Please add 10.0.0.0/8 to /etc/vbox/networks.conf")
+      end
+
+      # verify vault_password file has not executable permissions
+      file = CONSTANTS::ANSIBLE_FOLDER_HOST + "/.vault_password"
+      if File.exist?(file)
+        if File.executable?(file)
+          $logger.log_error_and_raise_exception(self, "File #{file} has executable permissions. Please remove them. e.g. chmod 600 #{file}")
+        else
+          $logger.success(self, "File #{file} does not have executable permissions.")
+        end
+      else
+        $logger.log_error_and_raise_exception(self, "File #{file} does not exist. Please create it.")
+      end
+
+    end
   end
   
 end

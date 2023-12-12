@@ -1,5 +1,6 @@
 ---
-- include_vars: "/vagrant/settings.yml"
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
 
 # https://metallb.universe.tf/configuration/calico/ changes needed???
 # - name: Install calicoctl
@@ -32,3 +33,8 @@
 
 - name: Create metallb IPAddressPool
   ansible.builtin.command: kubectl apply -f {{ config_path }}/IPAddressPool.yml
+  become: false
+  retries: 10
+  delay: 20
+  register: result
+  until: result is succeeded

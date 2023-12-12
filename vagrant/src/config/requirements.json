@@ -3,7 +3,8 @@
         "virtualbox"
     ],
     "vagrant-plugins": {
-        "vagrant-timezone": ["1.3.0"],
-        "vagrant-vbguest": ["0.31.0"]
+    },
+    "vagrant-plugins-windows": {
+        "virtualbox_WSL2": ["0.1.3"]
     }
 }
