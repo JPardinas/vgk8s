@@ -40,11 +40,13 @@ module Node
 
       node.vm.hostname = vm_name
 
+      node.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true, nic_type: CONSTANTS::VBOX_NETWORK_NIC_TYPE
+
       $logger.debug(self, "Setting up the network...")
       ip = CONSTANTS::VBOX_NETWORK_PRIVATE_IP
       
       $logger.key_value(self, "Control server network", "default", Logger::DEBUG)
-      node.vm.network "private_network", ip: ip
+      node.vm.network "private_network", ip: ip, adapter: 2, nic_type: CONSTANTS::VBOX_NETWORK_NIC_TYPE
       
       $logger.debug(self, "Network setted up.")
 
@@ -113,7 +115,6 @@ module Node
           ansible_local.inventory_path = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local"
           ansible_local.config_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/ansible.cfg"
           ansible_local.galaxy_role_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml"
-          # ansible_local.galaxy_roles_path = "/home/vagrant/.ansible/collections/" TODO: verify if we can delete it
         end
       else
         $logger.debug(self, "Adding the inventory/local shell provisioner...")
@@ -169,7 +170,7 @@ module Node
         ip_start = Integer(ip_sections.captures[1])
         ip = ip_nw + (ip_start + i).to_s
         $logger.key_value(self, "Control server network", "default", Logger::DEBUG)
-        node.vm.network "private_network", ip: ip
+        node.vm.network "private_network", ip: ip, adapter: 2, nic_type: CONSTANTS::VBOX_NETWORK_NIC_TYPE
         $logger.debug(self, "Network setted up.")
 
         node.vm.provider :virtualbox do |vb|
@@ -226,7 +227,6 @@ module Node
           ansible_local.inventory_path = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local"
           ansible_local.config_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/ansible.cfg"
           ansible_local.galaxy_role_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml"
-          # ansible_local.galaxy_roles_path = "/home/vagrant/.ansible/collections/" TODO: verify if we can delete it
         end
         
         $logger.key_value(self, "IP", ip, Logger::INFO)

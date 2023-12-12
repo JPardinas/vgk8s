@@ -53,5 +53,6 @@ module CONSTANTS
   VBOX_VM_GROUP_NAME = SETTINGS["virtual_box"]["vm_group_name"]
   VBOX_NETWORK_HOSTNAME_PREFIX = SETTINGS["virtual_box"]["network"]["hostname_prefix"]
   VBOX_NETWORK_PRIVATE_IP = SETTINGS["virtual_box"]["network"]["private_ip"]
+  VBOX_NETWORK_NIC_TYPE = SETTINGS["virtual_box"]["network"]["nic_type"]
 
 end
