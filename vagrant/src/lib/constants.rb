@@ -7,6 +7,7 @@ module CONSTANTS
   ANSIBLE_CORE_VERSION = SETTINGS["ansible"]["version"]
   ANSIBLE_FOLDER_HOST = File.expand_path("../../../../ansible/", __FILE__)
   ANSIBLE_FOLDER_TARGET = SETTINGS["ansible"]["folder_path"]
+  ANSIBLE_PROVIDER = SETTINGS["ansible"]["provider"]
   
   CHARTS_FOLDER_HOST = File.expand_path("../../../../charts/", __FILE__)
   CHARTS_FOLDER_TARGET = SETTINGS["charts"]["folder_path"]
@@ -29,6 +30,7 @@ module CONSTANTS
   CONFIG_VALID_PROVIDERS = JSON.parse(File.read(File.expand_path("../../config/requirements.json", __FILE__)))["providers"]
   
   REQUIRED_PLUGINS = JSON.parse(File.read(File.expand_path("../../config/requirements.json", __FILE__)))["vagrant-plugins"]
+  REQUIRED_PLUGINS_WINDOWS = JSON.parse(File.read(File.expand_path("../../config/requirements.json", __FILE__)))["vagrant-plugins-windows"]
   
   SCRIPT_COMMON = File.expand_path('../../scripts/common.sh', __FILE__)
   SCRIPT_INSTALL_PYTHON3 = File.expand_path('../../scripts/install-python.sh', __FILE__)
@@ -41,6 +43,7 @@ module CONSTANTS
   VAGRANT_KEYBOARD_LAYOUT = SETTINGS["vagrant"]["keyboard_layout"]
   VAGRANT_IS_DEBUG = ARGV.include?('--debug')
   VAGRANT_IS_UP = ARGV.include?('up')
+  VAGRANT_IS_WINDOWS_WSL = SETTINGS["vagrant"]["is_windows_wsl"]
   VAGRANT_LOG_LEVEL = SETTINGS["vagrant"]["log_level"]
   VAGRANT_PROVIDER = SETTINGS["vagrant"]["provider"]
   VAGRANT_TIMEZONE = SETTINGS["vagrant"]["timezone"]

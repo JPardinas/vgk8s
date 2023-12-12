@@ -1,6 +1,8 @@
 ---
 - hosts: vgk8s-master-node
   become: false
+  vars:
+    settings_file_path: /mnt/c/Users/jpard/Desktop/project/vgk8s/vagrant/settings.yml
   tasks:
     - include_role:
         name: vgk8s.utils.helm

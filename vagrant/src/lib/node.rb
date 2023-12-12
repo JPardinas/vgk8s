@@ -76,9 +76,6 @@ module Node
       $logger.debug(self, "Adding the clean inventory/local shell provisioner...")
       Utils.define_shell_provision node, "clean inventory/local", script_content: "rm -rf #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local && touch #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local", privileged: false
       
-      $logger.debug(self, "Adding the inventory/local shell provisioner...")
-      Utils.define_shell_provision node, "inventory/local", script_content: "echo '[local]\n#{vm_name} ansible_connection=local' >> #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local", privileged: false
-
       $logger.debug(self, "Adding the cp k8s-requirements shell provisioner...")
       Utils.define_shell_provision node, "ansible cp k8s-requirements", script_content: "cp #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements-template.yml #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml", privileged: false
       
@@ -88,21 +85,56 @@ module Node
       $logger.debug(self, "Adding the cp playbook init shell provisioner...")
       Utils.define_shell_provision node, "ansible cp playbook init", script_content: "cp #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/playbooks/init-template.yml #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/playbooks/init.yml", privileged: false
 
+      $logger.debug(self, "Adding the cp k8s-requirements shell provisioner...")
+      Utils.define_shell_provision node, "ansible cp k8s-requirements", script_content: "cp #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements-template.yml #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml", privileged: false
+
       $logger.debug(self, "Adding the replace playbook init shell provisioner...")
       Utils.define_shell_provision node, "ansible replace playbook init", script_content: "find #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/playbooks/init.yml -type f -exec sed -i 's|REPLACE_MASTER_HOST|#{vm_name}|g' {} +", privileged: false
 
-      $logger.debug(self, "Adding the ansible_local provisioner...")
-      node.vm.provision "ansible_local" do |ansible_local| # https://developer.hashicorp.com/vagrant/docs/provisioning/ansible_common
-        ansible_local.install = false
-        ansible_local.compatibility_mode = "2.0"
-        ansible_local.verbose = true
-        ansible_local.provisioning_path = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}"
-        ansible_local.playbook = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/playbooks/init.yml"
-        ansible_local.vault_password_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/.vault_password"
-        ansible_local.inventory_path = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local"
-        ansible_local.config_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/ansible.cfg"
-        ansible_local.galaxy_role_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml"
-        # ansible_local.galaxy_roles_path = "/home/vagrant/.ansible/collections/" TODO: verify if we can delete it
+      use_ansible_local = CONSTANTS::ANSIBLE_PROVIDER == "guest"
+      if use_ansible_local
+        $logger.debug(self, "Adding the inventory/local shell provisioner...")
+        Utils.define_shell_provision node, "inventory/local", script_content: "echo '[local]\n#{vm_name} ansible_connection=local' >> #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local", privileged: false
+  
+        $logger.debug(self, "Adding the replace playbook init shell provisioner...")
+        Utils.define_shell_provision node, "ansible replace playbook init", script_content: "find #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/playbooks/init.yml -type f -exec sed -i 's|REPLACE_SETTINGS_FILE_PATH|/vagrant/settings.yml|g' {} +", privileged: false
+        
+        $logger.debug(self, "Adding the replace k8s-requirements shell provisioner...")
+        Utils.define_shell_provision node, "ansible replace k8s-requirements", script_content: "find #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml -type f -exec sed -i 's|REPLACE_LOCATION|#{CONSTANTS::ANSIBLE_FOLDER_TARGET}|g' {} +", privileged: false
+
+        $logger.debug(self, "Adding the ansible_local provisioner...")
+        node.vm.provision "ansible_local" do |ansible_local| # https://developer.hashicorp.com/vagrant/docs/provisioning/ansible_common
+          ansible_local.install = false
+          ansible_local.compatibility_mode = "2.0"
+          ansible_local.verbose = true
+          ansible_local.provisioning_path = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}"
+          ansible_local.playbook = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/playbooks/init.yml"
+          ansible_local.vault_password_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/.vault_password"
+          ansible_local.inventory_path = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local"
+          ansible_local.config_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/ansible.cfg"
+          ansible_local.galaxy_role_file = "#{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml"
+          # ansible_local.galaxy_roles_path = "/home/vagrant/.ansible/collections/" TODO: verify if we can delete it
+        end
+      else
+        $logger.debug(self, "Adding the inventory/local shell provisioner...")
+        Utils.define_shell_provision node, "inventory/local", script_content: "echo '#{vm_name} ansible_host=#{ip}' ansible_user='vagrant' ansible_password='vagrant' >> #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local", privileged: false
+  
+        $logger.debug(self, "Adding the replace playbook init shell provisioner...")
+        Utils.define_shell_provision node, "ansible replace playbook init", script_content: "find #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/playbooks/init.yml -type f -exec sed -i 's|REPLACE_SETTINGS_FILE_PATH|#{CONSTANTS::SETTINGS_FILE}|g' {} +", privileged: false
+
+        $logger.debug(self, "Adding the replace k8s-requirements shell provisioner...")
+        Utils.define_shell_provision node, "ansible replace k8s-requirements", script_content: "find #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml -type f -exec sed -i 's|REPLACE_LOCATION|#{CONSTANTS::ANSIBLE_FOLDER_HOST}|g' {} +", privileged: false
+
+        $logger.debug(self, "Adding the ansible provisioner...")
+        node.vm.provision "ansible" do |ansible| # https://developer.hashicorp.com/vagrant/docs/provisioning/ansible_common
+          ansible.compatibility_mode = "2.0"
+          ansible.verbose = true
+          ansible.playbook = "#{CONSTANTS::ANSIBLE_FOLDER_HOST}/playbooks/init.yml"
+          ansible.vault_password_file = "#{CONSTANTS::ANSIBLE_FOLDER_HOST}/.vault_password"
+          ansible.inventory_path = "#{CONSTANTS::ANSIBLE_FOLDER_HOST}/inventory/local"
+          ansible.config_file = "#{CONSTANTS::ANSIBLE_FOLDER_HOST}/ansible.cfg"
+          ansible.galaxy_role_file = "#{CONSTANTS::ANSIBLE_FOLDER_HOST}/requirements/k8s-requirements.yml"
+        end
       end
       
       $logger.key_value(self, "IP", ip, Logger::INFO)

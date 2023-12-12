@@ -4,6 +4,7 @@ charts:
 ansible:
   version: 2.16.0
   folder_path: /ansible
+  ansible_provider: host # host or guest
 vagrant:
   boot_timeout: 600
   box_name: bento/ubuntu-22.04
@@ -12,6 +13,7 @@ vagrant:
   provider: virtualbox
   timezone: Europe/Madrid
   keyboard_layout: es
+  is_windows_wsl: true
 virtual_box:
   vm_group_name: VGK8S Kubernetes Cluster
   network:
@@ -28,7 +30,7 @@ cluster:
       - 8.8.8.8
       - 1.1.1.1
     pod_cidr: 172.16.1.0/16
-    service_cidr: 172.17.1.0/18
+    service_cidr: 172.17.0.0/16
     metallb:
       start: 10.0.0.10
       end: 10.0.0.10

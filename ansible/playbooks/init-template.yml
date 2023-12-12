@@ -1,6 +1,8 @@
 ---
 - hosts: REPLACE_MASTER_HOST
   become: false
+  vars:
+    settings_file_path: REPLACE_SETTINGS_FILE_PATH
   tasks:
     - include_role:
         name: vgk8s.utils.helm

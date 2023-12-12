@@ -1,5 +1,6 @@
 ---
-- include_vars: "/vagrant/settings.yml"
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
 
 - name: Get node name
   ansible.builtin.shell: hostname -s
@@ -62,36 +63,36 @@
   become: true
 
 # curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/calico.yaml -O
-# - name: Download Calico manifest
-#   ansible.builtin.get_url:
-#     url: https://raw.githubusercontent.com/projectcalico/calico/v{{ cluster.software.calico }}/manifests/calico.yaml
-#     dest: "{{ config_path }}/calico.yaml"
-#     mode: '0644'
-#   become: true
-
-# - name: Apply Calico manifest
-#   ansible.builtin.command: kubectl apply -f {{ config_path }}/calico.yaml
-#   register: result
-#   until: result is succeeded
-#   retries: 5
-#   delay: 15
-#   become: false
-
-# https://github.com/flannel-io/flannel/releases/download/v0.23.0/kube-flannel.yml
-- name: Download flannel manifest
+- name: Download Calico manifest
   ansible.builtin.get_url:
-    url: https://github.com/flannel-io/flannel/releases/download/v0.23.0/kube-flannel.yml
-    dest: "{{ config_path }}/kube-flannel.yaml"
+    url: https://raw.githubusercontent.com/projectcalico/calico/v{{ cluster.software.calico }}/manifests/calico.yaml
+    dest: "{{ config_path }}/calico.yaml"
     mode: '0644'
   become: true
 
-- name: Apply flannel manifest
-  ansible.builtin.command: kubectl apply -f {{ config_path }}/kube-flannel.yaml
+- name: Apply Calico manifest
+  ansible.builtin.command: kubectl apply -f {{ config_path }}/calico.yaml
   register: result
   until: result is succeeded
   retries: 5
   delay: 15
   become: false
+
+# # https://github.com/flannel-io/flannel/releases/download/v0.23.0/kube-flannel.yml
+# - name: Download flannel manifest
+#   ansible.builtin.get_url:
+#     url: https://github.com/flannel-io/flannel/releases/download/v0.23.0/kube-flannel.yml
+#     dest: "{{ config_path }}/kube-flannel.yaml"
+#     mode: '0644'
+#   become: true
+
+# - name: Apply flannel manifest
+#   ansible.builtin.command: kubectl apply -f {{ config_path }}/kube-flannel.yaml
+#   register: result
+#   until: result is succeeded
+#   retries: 5
+#   delay: 15
+#   become: false
 
 # Flannel CNI (finally decided for flannel because calico was causing conflicts with metallb)
 # - name: Create namespace kube-flannel

@@ -1,5 +1,6 @@
 ---
-- include_vars: "/vagrant/settings.yml"
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
 
 # - name: Create namespace argocd
 #   ansible.builtin.command: "kubectl create namespace argocd"
