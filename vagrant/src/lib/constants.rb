@@ -7,7 +7,7 @@ module CONSTANTS
   ANSIBLE_CORE_VERSION = SETTINGS["ansible"]["version"]
   ANSIBLE_FOLDER_HOST = File.expand_path("../../../../ansible/", __FILE__)
   ANSIBLE_FOLDER_TARGET = SETTINGS["ansible"]["folder_path"]
-  ANSIBLE_PROVIDER = SETTINGS["ansible"]["provider"]
+  ANSIBLE_PROVIDER = SETTINGS["ansible"]["ansible_provider"]
   
   CHARTS_FOLDER_HOST = File.expand_path("../../../../charts/", __FILE__)
   CHARTS_FOLDER_TARGET = SETTINGS["charts"]["folder_path"]
@@ -31,7 +31,7 @@ module CONSTANTS
   
   REQUIRED_PLUGINS = JSON.parse(File.read(File.expand_path("../../config/requirements.json", __FILE__)))["vagrant-plugins"]
   REQUIRED_PLUGINS_WINDOWS = JSON.parse(File.read(File.expand_path("../../config/requirements.json", __FILE__)))["vagrant-plugins-windows"]
-  
+
   SCRIPT_COMMON = File.expand_path('../../scripts/common.sh', __FILE__)
   SCRIPT_INSTALL_PYTHON3 = File.expand_path('../../scripts/install-python.sh', __FILE__)
   SCRIPT_KEYBOARD = File.expand_path('../../scripts/keyboard.sh', __FILE__)
@@ -47,6 +47,10 @@ module CONSTANTS
   VAGRANT_LOG_LEVEL = SETTINGS["vagrant"]["log_level"]
   VAGRANT_PROVIDER = SETTINGS["vagrant"]["provider"]
   VAGRANT_TIMEZONE = SETTINGS["vagrant"]["timezone"]
+
+  SHARED_FOLDER_MOUNT_OPTIONS = if VAGRANT_PROVIDER == "virtualbox" then ["dmode=775,fmode=664"] else ["dir_mode=0755,file_mode=0660"] end
+  SHARED_FOLDER_SMB_USERNAME = SETTINGS["shared_folder"]["smb"]["username"]
+  SHARED_FOLDER_SMB_PASSWORD = SETTINGS["shared_folder"]["smb"]["password"]
   
   VERSION = "0.0.1"
 

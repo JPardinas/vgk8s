@@ -52,12 +52,33 @@ module Node
         vb.name = vm_name
         vb.memory = CONSTANTS::CLUSTER_NODES_CONTROL_PLANE_MEMORY
         vb.cpus = CONSTANTS::CLUSTER_NODES_CONTROL_PLANE_CPU
-        vb.customize ["modifyvm", :id, "--groups", ("/" + CONSTANTS::VBOX_VM_GROUP_NAME)]        
+        vb.customize ["modifyvm", :id, "--groups", ("/" + CONSTANTS::VBOX_VM_GROUP_NAME)]
         vb.default_nic_type = CONSTANTS::VBOX_NETWORK_NIC_TYPE
       end
 
+      node.vm.provider :vmware_desktop do |vd|
+        # vd.name = vm_name
+        vd.memory = CONSTANTS::CLUSTER_NODES_CONTROL_PLANE_MEMORY
+        vd.cpus = CONSTANTS::CLUSTER_NODES_CONTROL_PLANE_CPU
+        # vd.vmx["ethernet0.virtualDev"] = CONSTANTS::VBOX_NETWORK_NIC_TYPE
+        # vd.vmx["ethernet0.present"] = "TRUE"
+        # vd.vmx["ethernet0.connectionType"] = "nat"
+        # vd.vmx["ethernet0.addressType"] = "generated"
+        # vd.vmx["ethernet0.wakeOnPcktRcv"] = "FALSE"
+        # vd.vmx["ethernet0.linkStatePropagation.enable"] = "TRUE"
+        # vd.vmx["ethernet0.pciSlotNumber"] = "160"
+        # vd.vmx["ethernet0.generatedAddress"] = "00:0c:29:2a:2a:2a"
+        # vd.vmx["ethernet0.generatedAddressOffset"] = "0"
+        # enable gui
+        vd.gui = true
+      end
+
       $logger.debug(self, "Adding the charts folder sync...")
-      node.vm.synced_folder CONSTANTS::CHARTS_FOLDER_HOST, CONSTANTS::CHARTS_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
+      if CONSTANTS::VAGRANT_PROVIDER == "virtualbox"
+        node.vm.synced_folder CONSTANTS::CHARTS_FOLDER_HOST, CONSTANTS::CHARTS_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: CONSTANTS::SHARED_FOLDER_MOUNT_OPTIONS
+      else
+        node.vm.synced_folder CONSTANTS::CHARTS_FOLDER_HOST, CONSTANTS::CHARTS_FOLDER_TARGET, type: "smb", smb_username: CONSTANTS::SHARED_FOLDER_SMB_USERNAME, smb_password: CONSTANTS::SHARED_FOLDER_SMB_PASSWORD, mount_options: CONSTANTS::SHARED_FOLDER_MOUNT_OPTIONS
+      end
 
       $logger.debug(self, "Adding the keyboard layout shell provisioner...")
       Utils.define_shell_provision node, "keyboard layout", path_to_script: CONSTANTS::SCRIPT_KEYBOARD, privileged: false, args: CONSTANTS::VAGRANT_KEYBOARD_LAYOUT
@@ -72,7 +93,11 @@ module Node
       Utils.define_shell_provision node, "ansible-core installation", script_content: "pip3 install --user ansible-core==#{CONSTANTS::ANSIBLE_CORE_VERSION}", privileged: false
 
       $logger.debug(self, "Adding the ansible folder sync...")
-      node.vm.synced_folder CONSTANTS::ANSIBLE_FOLDER_HOST, CONSTANTS::ANSIBLE_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
+      if CONSTANTS::VAGRANT_PROVIDER == "virtualbox"
+        node.vm.synced_folder CONSTANTS::ANSIBLE_FOLDER_HOST, CONSTANTS::ANSIBLE_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: CONSTANTS::SHARED_FOLDER_MOUNT_OPTIONS
+      else
+        node.vm.synced_folder CONSTANTS::ANSIBLE_FOLDER_HOST, CONSTANTS::ANSIBLE_FOLDER_TARGET, type: "smb", smb_username: CONSTANTS::SHARED_FOLDER_SMB_USERNAME, smb_password: CONSTANTS::SHARED_FOLDER_SMB_PASSWORD, mount_options: CONSTANTS::SHARED_FOLDER_MOUNT_OPTIONS
+      end
 
       $logger.debug(self, "Adding the clean inventory/local shell provisioner...")
       Utils.define_shell_provision node, "clean inventory/local", script_content: "rm -rf #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local && touch #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local", privileged: false
@@ -102,6 +127,10 @@ module Node
         
         $logger.debug(self, "Adding the replace k8s-requirements shell provisioner...")
         Utils.define_shell_provision node, "ansible replace k8s-requirements", script_content: "find #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/requirements/k8s-requirements.yml -type f -exec sed -i 's|REPLACE_LOCATION|#{CONSTANTS::ANSIBLE_FOLDER_TARGET}|g' {} +", privileged: false
+
+        # chmod 600 ~/.vault_password
+        $logger.debug(self, "Adding the chmod vault_password shell provisioner...")
+        Utils.define_shell_provision node, "chmod vault_password", script_content: "chmod 600 #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/.vault_password", privileged: true
 
         $logger.debug(self, "Adding the ansible_local provisioner...")
         node.vm.provision "ansible_local" do |ansible_local| # https://developer.hashicorp.com/vagrant/docs/provisioning/ansible_common
@@ -169,7 +198,7 @@ module Node
         ip_start = Integer(ip_sections.captures[1])
         ip = ip_nw + (ip_start + i).to_s
         $logger.key_value(self, "Control server network", "default", Logger::DEBUG)
-        node.vm.network "private_network", ip: ip, adapter: 2, nic_type: CONSTANTS::VBOX_NETWORK_NIC_TYPE
+        node.vm.network "private_network", ip: ip
         $logger.debug(self, "Network setted up.")
 
         node.vm.provider :virtualbox do |vb|
@@ -177,10 +206,15 @@ module Node
           vb.memory = CONSTANTS::CLUSTER_NODES_WORKERS_MEMORY
           vb.cpus = CONSTANTS::CLUSTER_NODES_WORKERS_CPU
           vb.customize ["modifyvm", :id, "--groups", ("/" + CONSTANTS::VBOX_VM_GROUP_NAME)]
+          vb.default_nic_type = CONSTANTS::VBOX_NETWORK_NIC_TYPE
         end
 
         $logger.debug(self, "Adding the charts folder sync...")
-        node.vm.synced_folder CONSTANTS::CHARTS_FOLDER_HOST, CONSTANTS::CHARTS_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
+        if CONSTANTS::VAGRANT_PROVIDER == "virtualbox"
+          node.vm.synced_folder CONSTANTS::CHARTS_FOLDER_HOST, CONSTANTS::CHARTS_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: CONSTANTS::SHARED_FOLDER_MOUNT_OPTIONS
+        else
+          node.vm.synced_folder CONSTANTS::CHARTS_FOLDER_HOST, CONSTANTS::CHARTS_FOLDER_TARGET, type: "smb", smb_username: CONSTANTS::SHARED_FOLDER_SMB_USERNAME, smb_password: CONSTANTS::SHARED_FOLDER_SMB_PASSWORD, mount_options: CONSTANTS::SHARED_FOLDER_MOUNT_OPTIONS
+        end
 
         $logger.debug(self, "Adding the keyboard layout shell provisioner...")
         Utils.define_shell_provision node, "keyboard layout", path_to_script: CONSTANTS::SCRIPT_KEYBOARD, privileged: false
@@ -195,7 +229,11 @@ module Node
         Utils.define_shell_provision node, "ansible-core installation", script_content: "pip3 install --user ansible-core==#{CONSTANTS::ANSIBLE_CORE_VERSION}", privileged: false
 
         $logger.debug(self, "Adding the ansible folder sync...")
-        node.vm.synced_folder CONSTANTS::ANSIBLE_FOLDER_HOST, CONSTANTS::ANSIBLE_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775,fmode=664"]
+        if CONSTANTS::VAGRANT_PROVIDER == "virtualbox"
+          node.vm.synced_folder CONSTANTS::ANSIBLE_FOLDER_HOST, CONSTANTS::ANSIBLE_FOLDER_TARGET, owner: "vagrant", group: "vagrant", mount_options: CONSTANTS::SHARED_FOLDER_MOUNT_OPTIONS
+        else
+          node.vm.synced_folder CONSTANTS::ANSIBLE_FOLDER_HOST, CONSTANTS::ANSIBLE_FOLDER_TARGET, type: "smb", smb_username: CONSTANTS::SHARED_FOLDER_SMB_USERNAME, smb_password: CONSTANTS::SHARED_FOLDER_SMB_PASSWORD, mount_options: CONSTANTS::SHARED_FOLDER_MOUNT_OPTIONS
+        end
 
         $logger.debug(self, "Adding the clean inventory/local shell provisioner...")
         Utils.define_shell_provision node, "clean inventory/local", script_content: "rm -rf #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local && touch #{CONSTANTS::ANSIBLE_FOLDER_TARGET}/inventory/local", privileged: false

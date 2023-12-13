@@ -32,6 +32,15 @@ powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VBox
 powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VirtualBox.exe"
 powercfg /powerthrottling disable /path "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe"
 powercfg /powerthrottling disable /path "C:\Program Files\Vagrant\bin\vagrant.exe"
+powercfg /powerthrottling disable /path "C:\Program Files (x86)\VMware\VMware Player\vmplayer.exe"
+powercfg /powerthrottling disable /path "C:\Program Files (x86)\VMware\VMware Player\x64\vmware-vmx.exe"
+powercfg /powerthrottling disable /path "C:\Program Files (x86)\VMware\VMware Player\vmware-authd.exe"
+powercfg /powerthrottling disable /path "C:\Program Files (x86)\VMware\VMware Player\vmware-unity-helper.exe"
+powercfg /powerthrottling disable /path "C:\Windows\System32\vmwp.exe"
+
+
+
+
 powercfg /powerthrottling list
 
 Battery Usage Settings By App

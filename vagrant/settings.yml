@@ -1,19 +1,23 @@
 ---
+shared_folder:
+  smb:
+    username: jpard
+    password: 
 charts:
   folder_path: /charts
 ansible:
   version: 2.16.0
   folder_path: /ansible
-  ansible_provider: host # host or guest
+  ansible_provider: guest # host or guest
 vagrant:
   boot_timeout: 600
   box_name: bento/ubuntu-22.04
-  box_version: 202303.13.0
+  box_version: 202309.08.0
   log_level: DEBUG
-  provider: virtualbox
+  provider: vmware_desktop # virtualbox or vmware_desktop
   timezone: Europe/Madrid
   keyboard_layout: es
-  is_windows_wsl: true
+  is_windows_wsl: false
 virtual_box:
   vm_group_name: VGK8S Kubernetes Cluster
   network:
