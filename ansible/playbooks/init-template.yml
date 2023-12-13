@@ -11,8 +11,14 @@
     - include_role:
         name: vgk8s.infrastructure.k8s
     - include_role:
+        name: vgk8s.infrastructure.calico
+    - include_role:
+        name: vgk8s.infrastructure.nfspvc
+    - include_role:
         name: vgk8s.infrastructure.metallb
     - include_role:
         name: vgk8s.infrastructure.traefik
+    - include_role:
+        name: vgk8s.infrastructure.prometheus
     - include_role:
         name: vgk8s.infrastructure.argocd

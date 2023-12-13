@@ -19,7 +19,7 @@ virtual_box:
   network:
     hostname_prefix: vgk8s-
     private_ip: 192.168.56.100
-    nic_type: Am79C973 # intel seems to cause problems with alder lake processors reseting network adapter randomly NAT: Can't allocate mbuf
+    nic_type: virtio
 cluster:
   software:
     calico: 3.26.0

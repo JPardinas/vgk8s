@@ -40,13 +40,11 @@ module Node
 
       node.vm.hostname = vm_name
 
-      node.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true, nic_type: CONSTANTS::VBOX_NETWORK_NIC_TYPE
-
       $logger.debug(self, "Setting up the network...")
       ip = CONSTANTS::VBOX_NETWORK_PRIVATE_IP
       
       $logger.key_value(self, "Control server network", "default", Logger::DEBUG)
-      node.vm.network "private_network", ip: ip, adapter: 2, nic_type: CONSTANTS::VBOX_NETWORK_NIC_TYPE
+      node.vm.network "private_network", ip: ip
       
       $logger.debug(self, "Network setted up.")
 
@@ -54,7 +52,8 @@ module Node
         vb.name = vm_name
         vb.memory = CONSTANTS::CLUSTER_NODES_CONTROL_PLANE_MEMORY
         vb.cpus = CONSTANTS::CLUSTER_NODES_CONTROL_PLANE_CPU
-        vb.customize ["modifyvm", :id, "--groups", ("/" + CONSTANTS::VBOX_VM_GROUP_NAME)]
+        vb.customize ["modifyvm", :id, "--groups", ("/" + CONSTANTS::VBOX_VM_GROUP_NAME)]        
+        vb.default_nic_type = CONSTANTS::VBOX_NETWORK_NIC_TYPE
       end
 
       $logger.debug(self, "Adding the charts folder sync...")
