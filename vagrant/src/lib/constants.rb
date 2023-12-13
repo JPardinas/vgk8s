@@ -50,7 +50,7 @@ module CONSTANTS
 
   SHARED_FOLDER_MOUNT_OPTIONS = if VAGRANT_PROVIDER == "virtualbox" then ["dmode=775,fmode=664"] else ["dir_mode=0755,file_mode=0660"] end
   SHARED_FOLDER_SMB_USERNAME = SETTINGS["shared_folder"]["smb"]["username"]
-  SHARED_FOLDER_SMB_PASSWORD = SETTINGS["shared_folder"]["smb"]["password"]
+  SHARED_FOLDER_SMB_PASSWORD = ENV['SMB_PASSWORD'] || ""
   
   VERSION = "0.0.1"
 
