@@ -18,6 +18,8 @@ Vagrant.configure("2") do |config|
     Validator.check_if_box_is_supported()
     Validator.check_if_provider_is_supported()
 
+    ENV['VAGRANT_DEFAULT_PROVIDER'] = CONSTANTS::VAGRANT_PROVIDER
+
     Node.create_control_server(config)
     Node.create_workers(config)
 end

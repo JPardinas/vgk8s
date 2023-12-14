@@ -1,1 +1,2 @@
-vgk8s-master-node ansible_host=192.168.56.100 ansible_user=vagrant ansible_password=vagrant
+[local]
+vgk8s-master-node ansible_connection=local

@@ -1,24 +1,28 @@
 ---
+shared_folder:
+  smb:
+    username: jpard
 charts:
   folder_path: /charts
 ansible:
   version: 2.16.0
   folder_path: /ansible
-  ansible_provider: host # host or guest
+  ansible_provider: guest # host or guest
 vagrant:
   boot_timeout: 600
-  box_name: bento/ubuntu-22.04
-  box_version: 202303.13.0
+  box_name: roboxes/ubuntu2204
+  box_version: "4.3.2"
   log_level: DEBUG
-  provider: virtualbox
+  provider: hyperv # virtualbox vmware_desktop hyperv
   timezone: Europe/Madrid
   keyboard_layout: es
-  is_windows_wsl: true
+  is_windows_wsl: false
+  folder_path: /vagrant
 virtual_box:
   vm_group_name: VGK8S Kubernetes Cluster
   network:
     hostname_prefix: vgk8s-
-    private_ip: 192.168.56.100
+    private_ip: 172.20.118.61
     nic_type: virtio
 cluster:
   software:
@@ -26,15 +30,15 @@ cluster:
     kubernetes: 1.27.8-1.1
     os: xUbuntu_22.04
   network:
-    control_ip: 192.168.56.100
+    control_ip: 172.20.118.61
     dns_servers:
       - 8.8.8.8
       - 1.1.1.1
     pod_cidr: 172.16.1.0/16
     service_cidr: 172.17.0.0/16
     metallb:
-      start: 192.168.56.100
-      end: 192.168.56.100
+      start: 172.20.118.61
+      end: 172.20.118.61
   nodes:
     control_plane:
       cpu: 4
