@@ -2,7 +2,7 @@
 - hosts: vgk8s-master-node
   become: false
   vars:
-    settings_file_path: /mnt/c/Users/jpard/Desktop/project/vgk8s/vagrant/settings.yml
+    settings_file_path: /vagrant/settings.yml
   tasks:
     - include_role:
         name: vgk8s.utils.helm
@@ -18,5 +18,7 @@
         name: vgk8s.infrastructure.metallb
     - include_role:
         name: vgk8s.infrastructure.traefik
+    - include_role:
+        name: vgk8s.infrastructure.prometheus
     - include_role:
         name: vgk8s.infrastructure.argocd

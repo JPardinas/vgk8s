@@ -37,6 +37,8 @@ module CONSTANTS
   SCRIPT_KEYBOARD = File.expand_path('../../scripts/keyboard.sh', __FILE__)
   SCRIPT_MASTER = File.expand_path('../../scripts/master.sh', __FILE__)
 
+  VAGRANT_FOLDER_HOST = File.expand_path("../../../../vagrant/", __FILE__)
+  VAGRANT_FOLDER_TARGET = SETTINGS["vagrant"]["folder_path"]
   VAGRANT_BOOT_TIMEOUT = SETTINGS["vagrant"]["boot_timeout"]
   VAGRANT_BOX_NAME = SETTINGS["vagrant"]["box_name"]
   VAGRANT_BOX_VERSION = SETTINGS["vagrant"]["box_version"]

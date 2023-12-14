@@ -47,5 +47,10 @@
 - name: helm repo update
   ansible.builtin.command: "helm repo update"
 
+- name: helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_eth0.ipv4.address }} --set nfs.path=/mnt/nfs_share --namespace nfs-storage --set storageClass.defaultClass=true
+  ansible.builtin.command: "helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_eth0.ipv4.address }} --set nfs.path=/mnt/nfs_share --namespace nfs-storage --set storageClass.defaultClass=true"
+  when: ansible_eth1.ipv4.address is not defined
+
 - name: helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_eth1.ipv4.address }} --set nfs.path=/mnt/nfs_share --namespace nfs-storage
   ansible.builtin.command: "helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server={{ ansible_eth1.ipv4.address }} --set nfs.path=/mnt/nfs_share --namespace nfs-storage --set storageClass.defaultClass=true"
+  when: ansible_eth1.ipv4.address is defined

@@ -1,7 +1,8 @@
 {
     "providers": [
         "virtualbox",
-        "vmware_desktop"
+        "vmware_desktop",
+        "hyperv"
     ],
     "vagrant-plugins": {
     },
