@@ -1,0 +1,75 @@
+---
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
+
+- name: Check if {{ grafana.namespace }} already exists
+  ansible.builtin.command: "kubectl get namespace {{ grafana.namespace }}"
+  register: namespace_exists
+  failed_when: false
+  changed_when: false
+  become: false
+
+- name: Create namespace {{ grafana.namespace }} if not exists
+  ansible.builtin.command: "kubectl create namespace {{ grafana.namespace }}"
+  when: namespace_exists.rc != 0
+  become: false
+
+- name: Add helm repository
+  ansible.builtin.command: helm repo add grafana https://grafana.github.io/helm-charts
+
+- name: Create grafana secret
+  ansible.builtin.command: "kubectl create secret generic grafana --from-literal=admin-user=admin --from-literal=admin-password={{ grafana.adminPassword }} --namespace monitoring"
+  become: false
+
+- name: Install grafana
+  ansible.builtin.command: helm upgrade --install grafana grafana/grafana --namespace monitoring --set admin.existingSecret=grafana
+
+- name: Create grafana IngressRoute into {{ config_path }} directory
+  ansible.builtin.shell: |
+    cat <<EOF > {{ config_path }}/grafana.yaml
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: grafana
+      namespace: monitoring
+    spec:
+      rules:
+        - host: grafana.vgk8s.com
+          http:
+            paths:
+              - pathType: Prefix
+                path: "/"
+                backend:
+                  service:
+                    name: grafana
+                    port:
+                      number: 80
+    EOF
+
+- name: Create IngressRoute for grafana
+  ansible.builtin.command: "kubectl apply -f {{ config_path }}/grafana.yaml"
+  become: false
+
+- name: Update /etc/hosts with grafana.vgk8s.com
+  ansible.builtin.command: "echo '{{ host_ip }} grafana.vgk8s.com' >> /etc/hosts"
+  become: true
+
+# create datasource for http://prometheus.monitoring.svc.cluster.local:9090
+- name: Create grafana datasource
+  ansible.builtin.shell: |
+    cat <<EOF > {{ config_path }}/grafana-datasource.yaml
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      orgId: 1
+      url: http://prometheus.monitoring.svc.cluster.local:9090
+      isDefault: true
+      version: 1
+      editable: true
+    EOF
+
+- name: Create grafana datasource
+  ansible.builtin.command: "kubectl apply -f {{ config_path }}/grafana-datasource.yaml"
+  become: false
