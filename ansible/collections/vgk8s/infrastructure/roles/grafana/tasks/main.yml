@@ -51,25 +51,27 @@
   become: false
 
 - name: Update /etc/hosts with grafana.vgk8s.com
-  ansible.builtin.command: "echo '{{ host_ip }} grafana.vgk8s.com' >> /etc/hosts"
   become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ cluster.network.control_ip }} grafana.vgk8s.com"
 
-# create datasource for http://prometheus.monitoring.svc.cluster.local:9090
-- name: Create grafana datasource
-  ansible.builtin.shell: |
-    cat <<EOF > {{ config_path }}/grafana-datasource.yaml
-    apiVersion: 1
-    datasources:
-    - name: Prometheus
-      type: prometheus
-      access: proxy
-      orgId: 1
-      url: http://prometheus.monitoring.svc.cluster.local:9090
-      isDefault: true
-      version: 1
-      editable: true
-    EOF
+# # create datasource for http://prometheus.monitoring.svc.cluster.local:9090
+# - name: Create grafana datasource
+#   ansible.builtin.shell: |
+#     cat <<EOF > {{ config_path }}/grafana-datasource.yaml
+#     apiVersion: 1
+#     datasources:
+#     - name: Prometheus
+#       type: prometheus
+#       access: proxy
+#       orgId: 1
+#       url: http://prometheus.monitoring.svc.cluster.local:9090
+#       isDefault: true
+#       version: 1
+#       editable: true
+#     EOF
 
-- name: Create grafana datasource
-  ansible.builtin.command: "kubectl apply -f {{ config_path }}/grafana-datasource.yaml"
-  become: false
+# - name: Create grafana datasource
+#   ansible.builtin.command: "kubectl apply -f {{ config_path }}/grafana-datasource.yaml"
+#   become: false
