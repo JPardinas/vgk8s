@@ -6,5 +6,5 @@ vagrant_work_dir/*
 vagrant/.env
 vagrant/config
 doc/k8s-examples
-charts/**/charts
+charts/**/charts/*.tgz
 charts/test-app-api

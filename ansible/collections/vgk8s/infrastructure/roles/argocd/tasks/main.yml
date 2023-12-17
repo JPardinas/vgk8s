@@ -18,11 +18,7 @@
   ansible.builtin.command: "helm install argo-cd /charts/argocd/ --namespace argocd"
   become: false
 
-- name: Get argocd password
-  ansible.builtin.command: "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
-  register: argocd_password
-  become: false
-
-- name: Create Ingress for argocd
-  ansible.builtin.command: "kubectl apply -f /charts/argocd/Ingress.yaml"
-  become: false
+# - name: Get argocd password
+#   ansible.builtin.shell: "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+#   register: argocd_password
+#   become: false
