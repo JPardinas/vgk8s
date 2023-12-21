@@ -1,0 +1,21 @@
+---
+- name: Load settings.yml
+  ansible.builtin.include_vars: "{{ settings_file_path }}"
+
+- name: Create namespace gitness
+  ansible.builtin.command: "kubectl create namespace gitness"
+  become: false
+
+- name: Helm dep update
+  ansible.builtin.command: "helm dep update {{ charts_path }}/gitness/"
+  become: false
+
+- name: Install argocd
+  ansible.builtin.command: "helm install gitness {{ charts_path }}/gitness/ --namespace gitness"
+  become: false
+
+- name: Update /etc/hosts with gitness.vgk8s.com
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ cluster.network.control_ip }} gitness.vgk8s.com"
+  become: true

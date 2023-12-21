@@ -1,0 +1,4 @@
+---
+ansible_user: vagrant
+config_path: /vagrant/config
+charts_path: /charts
