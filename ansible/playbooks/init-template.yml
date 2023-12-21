@@ -24,3 +24,5 @@
         name: vgk8s.infrastructure.grafana
     - include_role:
         name: vgk8s.infrastructure.argocd
+    - include_role:
+        name: vgk8s.infrastructure.gitness

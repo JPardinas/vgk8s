@@ -22,3 +22,9 @@
 #   ansible.builtin.shell: "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
 #   register: argocd_password
 #   become: false
+
+- name: Update /etc/hosts with argocd.vgk8s.com
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ cluster.network.control_ip }} argocd.vgk8s.com"
+  become: true
