@@ -11,6 +11,23 @@
 - name: helm install traefik traefik/traefik --namespace=traefik-v2
   ansible.builtin.command: "helm install traefik traefik/traefik --namespace=traefik-v2"
 
+
+# Configure traefik to use Let's Encrypt, using acme staging server
+# - name: Configure traefik to use Let's Encrypt, using acme staging server
+#   ansible.builtin.shell: |
+#     cat <<EOF > {{ config_path }}/traefik-values.yaml
+#     additionalArguments:
+#       - "--log.level=DEBUG"
+#       - "--certificatesresolvers.le.acme.email=jpardinas23@gmail.com"
+#       - "--certificatesresolvers.le.acme.storage=/vagrant/config/acme.json"
+#       - "--certificatesresolvers.le.acme.tlschallenge=true"
+#       - "--certificatesresolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+#     EOF
+
+# - name: Update traefik helm chart
+#   ansible.builtin.command: "helm upgrade traefik traefik/traefik --namespace=traefik-v2 -f {{ config_path }}/traefik-values.yaml"
+#   become: false
+
 - name: Create traefik-dashboard service into {{ config_path }} directory
   ansible.builtin.shell: |
     cat <<EOF > {{ config_path }}/traefik-dashboard-svc.yaml
@@ -63,3 +80,4 @@
   ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "{{ cluster.network.control_ip }} traefik.vgk8s.com"
+
