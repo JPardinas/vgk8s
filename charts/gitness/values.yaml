@@ -1,6 +1,11 @@
 # Default values for gitness.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+env:
+  urlBase: "https://gitness.vgk8s.com"
+  urlGit: "https://gitness.vgk8s.com/git"
+  urlUI: "https://gitness.vgk8s.com"
+  urlAPI: "https://gitness.vgk8s.com/api"
 
 replicaCount: 1
 
@@ -41,7 +46,10 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 3000
+  port: 80
+  targetport: 80
+  port2: 443
+  targetport2: 443
 
 ingress:
   enabled: true
@@ -59,7 +67,14 @@ ingress:
               service:
                 name: gitness
                 port:
-                  number: 3000
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gitness
+                port:
+                  number: 443
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
